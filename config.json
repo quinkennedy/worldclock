@@ -1,0 +1,18 @@
+{
+  "palette": {
+    "dayWater": "#ece6d8",
+    "dayLand": "#dcd2bc",
+    "nightWater": "#0a0d16",
+    "nightLand": "#141926",
+    "letterbox": "#000000"
+  },
+  "layout": {
+    "minAspect": 1.6
+  },
+  "twilight": {
+    "softness": 1.5,
+    "civil": 0.62,
+    "nautical": 0.34,
+    "astronomical": 0.14
+  }
+}
