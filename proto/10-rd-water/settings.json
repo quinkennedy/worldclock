@@ -1,0 +1,89 @@
+{
+  "sim": {
+    "space": "map",
+    "mapWidth": 4096,
+    "screenScale": 3,
+    "latCorrection": 0,
+    "stepsPerFrame": 1,
+    "precision": "auto"
+  },
+  "model": "grayScott",
+  "grayScott": {
+    "Du": 0.2097,
+    "Dv": 0.105,
+    "dt": 1,
+    "seedDensity": 0.15,
+    "a": {
+      "feed": 0.022000000000000002,
+      "kill": 0.051
+    },
+    "b": {
+      "feed": 0.046,
+      "kill": 0.063
+    },
+    "view": {
+      "channel": "v",
+      "lo": 0,
+      "hi": 0.4
+    }
+  },
+  "fitzHughNagumo": {
+    "Du": 0.01,
+    "Dv": 0.24,
+    "dt": 0.0426,
+    "a": {
+      "a0": 0,
+      "a1": 0.5,
+      "epsilon": 4
+    },
+    "b": {
+      "a0": 0.1,
+      "a1": 0.5,
+      "epsilon": 4
+    },
+    "view": {
+      "channel": "u",
+      "lo": -0.7,
+      "hi": 0.7
+    }
+  },
+  "brusselator": {
+    "Du": 0.025,
+    "Dv": 0.2,
+    "dt": 0.0125,
+    "a": {
+      "A": 4.5,
+      "B": 8
+    },
+    "b": {
+      "A": 4.5,
+      "B": 7
+    },
+    "view": {
+      "channel": "u",
+      "lo": 0.5,
+      "hi": 8
+    }
+  },
+  "paramMap": {
+    "source": "depth",
+    "lo": 0,
+    "hi": 1,
+    "invert": false,
+    "noiseScale": 3,
+    "noiseSeed": 1
+  },
+  "flow": {
+    "strength": 0.054,
+    "scale": 4,
+    "evolution": 0.065
+  },
+  "display": {
+    "invert": false,
+    "land": "#6b6b6b",
+    "letterbox": "#000000"
+  },
+  "layout": {
+    "minAspect": 1.6
+  }
+}

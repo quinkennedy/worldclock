@@ -6,7 +6,7 @@ night: no text, numbers or UI. It's hosted as a static GitHub Pages site and run
 
 ## Specs (source of truth)
 `specs/00-vision.md` holds the goal and locked decisions. Each other spec is small and standalone, named
-`NN-name.<stage>.md`. The stage suffix is one of:
+`NN-name.<stage>.md` (sub-specs of a split spec: `NNa-name`, `NNb-name`, …). The stage suffix is one of:
 - `idea`: rough. Before work starts, interview the user for the real goal, split it into small sub-specs if needed,
   and get explicit confirmation of every key decision (each idea spec spells this out).
 - `defined`: outcome and scope are clear, but open questions remain.
@@ -15,7 +15,7 @@ night: no text, numbers or UI. It's hosted as a static GitHub Pages site and run
 
 When a spec changes stage, rename the file (`git mv`) and update its row in the `00-vision.md` spec map. The number
 never changes; refer to specs by number ("spec 05") in prose.
-Done: 01, 02, 04, 05, 06, 07 (long-run test pending for 01, 04, 05, 06, 07). The next spec isn't chosen yet, so ask. Don't
+Done: 01, 02, 04, 05, 06, 07, 10a (long-run test pending for 01, 04, 05, 06, 07; 10a is a prototype, no long-run test). The next spec isn't chosen yet, so ask. Don't
 start other specs unless asked.
 Every spec that touches `js/` or `shaders/` needs the long-run test in `DEV.md` before it's considered shipped.
 If a decision isn't in a spec, ask; don't invent it. Record new decisions in `00-vision.md`.
@@ -39,6 +39,7 @@ shaders/            shaders (lighting, stars, later halftone/moon); twilight.gls
 data/               committed shader-ready textures (land mask, later elevation, land cover, stars)
 tools/              offline data-prep scripts (spec 02); never run by the site
 specs/              one spec per feature
+proto/NN-name/      self-contained design prototypes (own Tweakpane, own settings.json); import ../../js etc.
 ```
 
 ## Constraints

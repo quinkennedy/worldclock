@@ -39,6 +39,8 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | Data       | Generative; offline prep scripts are OK when they make serving easier |
 | Data sources | Land cover and land mask: MODIS MCD12C1 v061 (latest year, manual Earthdata download). Elevation: ETOPO 2022 60s surface, with bathymetry. Stars: Yale BSC5, all ~9,100 stars. Details in 02 |
 | Data files | 4096x2048 cell-registered equirectangular. `land.png` = land fraction (inland lakes are water; Antarctic ice shelves are land, as ice; Arctic left as MODIS has it). `landcover.webp` = lossless RGB arid/forest/ice fractions (grass = land − sum). `elevation.webp` = lossless WebP, packed 16-bit metres+32768 in R/G (cell means), read with `texelFetch`. `stars.bin` = Float32 [ra, dec, vmag, B-V], J2000, precessed at runtime by 05. 10 MB budget is soft |
+| Prototypes | Each is a self-contained page at `proto/NN-name/index.html`, published on Pages but not linked from the piece. Imports shared code and data by relative path (`../../js/`, `../../shaders/`, `../../data/`), never copies. Tweakpane (same pinned version) always visible, `g` hides it, settings copy/download as JSON. Own defaults in its own folder; `config.json` and `index.html` stay untouched until a later spec adopts the design. The public-page rules (no GUI without `?gui`, no text) don't apply; time source, `highp`, relative paths and leak rules do |
+| Sub-specs  | A spec split into parts keeps its number as the umbrella; the parts are `NNa`, `NNb`, … (e.g. `10a-rd-flow-proto.done.md`), each with its own stage |
 
 ## Spec map
 Spec files are named `NN-name.<stage>.md`, with stage `idea`, `defined`, `ready` or `done`. A spec is renamed when its
@@ -55,7 +57,8 @@ stage changes; its number never changes. `ready` means every key decision has be
 | 07 | Dev GUI & time control     | **done** (long-run test pending, see `DEV.md`) | 01 (clock.js) |
 | 08 | Anti-solar sky             | idea    | 05         |
 | 09 | Ben-Day dot design iteration | idea (prototype first) | (03) |
-| 10 | Reaction-diffusion water   | idea (prototype first) | (02, 09) |
+| 10 | Reaction-diffusion water   | defined (umbrella: living ocean texture) | (02, 09) |
+| 10a | RD + fake flow prototype (`proto/10-rd-water/`) | **done** (prototype; tuning on the real display pending) | 02 |
 | 11 | Orange-peel projection     | idea (prototype first) | 01 |
 | 12 | Globe views                | idea (prototype first) | 01 (06 for moon views) |
 | 13 | Spec stage colours in VS Code (dev tooling) | idea | — |

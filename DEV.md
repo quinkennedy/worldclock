@@ -71,6 +71,17 @@ Record the date, machine, browser and results below.
 |------|-------------------|----------|--------------------|--------|
 |      |                   |          |                    |        |
 
+## Design prototypes
+
+Each prototype is a self-contained page in `proto/NN-name/`, published with the site but not linked from it. It
+imports the piece's shared code and data, has its own Tweakpane panel (always shown; `g` hides it) and keeps its
+defaults in its own `settings.json`. To change them, press **Download settings.json** and replace that file.
+Prototypes never change `config.json` or the public page.
+
+| URL                    | Spec | What it's for |
+|------------------------|------|---------------|
+| `/proto/10-rd-water/`  | 10a  | Reaction-diffusion on the oceans (Gray-Scott, FitzHugh-Nagumo, Brusselator), carried by a curl-noise flow. Map or screen simulation, a parameter map (latitude, depth, noise) blending two parameter sets, raw greyscale view. |
+
 ## Changing the look
 
 Design values (colours, the twilight's lux range, relief exaggeration, star size and brightness, sun and moon discs and so on) live in `config.json`. Edit it and reload,
