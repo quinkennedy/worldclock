@@ -10,9 +10,7 @@
     "minAspect": 1.6
   },
   "twilight": {
-    "softness": 1.5,
-    "civil": 0.62,
-    "nautical": 0.34,
-    "astronomical": 0.14
+    "nightLux": 0.001,
+    "dayLux": 100000
   }
 }

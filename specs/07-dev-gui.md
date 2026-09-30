@@ -29,6 +29,7 @@ The public page (without `?gui`) never loads it and always runs in real time.
 
 ## Design panel
 - One folder per spec (Twilight, Halftone, Relief, Stars, Moon), each added when its spec lands.
+  `twilight.nightLux`/`dayLux` are config-only and don't appear in the panel.
 - Every tunable value lives in `config.json` (repo root). `js/config.js` fetches it at startup, falls back to
   built-in defaults if the fetch fails, and exports the result. The GUI binds to a live copy.
 - **Copy config** button: copies the current values as JSON to the clipboard.

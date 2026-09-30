@@ -6,7 +6,8 @@ night: no text, numbers or UI. It's hosted as a static GitHub Pages site and run
 
 ## Specs (source of truth)
 `specs/00-vision.md` holds the goal and locked decisions. Each `specs/0N-*.md` is a small, standalone spec.
-**Currently building v1: `specs/01-sun-terminator.md` first, then `specs/07-dev-gui.md`.** Don't start other specs unless asked.
+**Currently building v1: `specs/07-dev-gui.md`** (`specs/01-sun-terminator.md` is done). Don't start other specs unless asked.
+Every spec that touches `js/` or `shaders/` needs the long-run test in `DEV.md` before it's considered shipped.
 If a decision isn't in a spec, ask; don't invent it. Record new decisions in `00-vision.md`.
 
 ## Folder structure (planned)

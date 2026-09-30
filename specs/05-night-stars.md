@@ -8,7 +8,7 @@ visibly move relative to the terminator.
 ## Scope
 - Zenith at (lat, lon) = celestial (Dec = lat, RA = lon + GMST). Compute GMST in JS and pass it as a uniform.
 - Stars from 02's catalogue, drawn as points with size/brightness from magnitude.
-- Fades in with the twilight bands from 01: none in day, full in astronomical night.
+- Fades in with the twilight gradient from 01: none in day, full in astronomical night.
 - Drawn over the night-side land/water tint and kept subtle, so the tint still reads.
 
 ## Open questions

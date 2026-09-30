@@ -28,9 +28,34 @@ The plain page runs in real time and has no controls. Add `?gui` for developer o
 `?t=` takes any ISO date/time in UTC. With `?gui`, the `g` key will show or hide the dev panel
 once it's built (spec 07). Without `?gui`, no key does anything.
 
+## Long-run test
+
+The piece has to run unattended for weeks, so repeat this test on the gallery machine (or one like it)
+after any change to `js/` or `shaders/`, and before installing. Short headless checks can't cover it.
+
+1. Set up the machine as it will be installed: same browser, OS power plan, monitor and resolution.
+2. Open the public URL (no `?gui`), full screen, and leave it running for at least 24 hours, ideally a few days.
+3. At the start, after about an hour and at the end, note the tab's memory and the GPU process's memory
+   (Chrome: Shift+Esc opens its Task Manager).
+
+It passes if:
+
+- **Memory:** both figures stay roughly flat after the first hour, with no steady climb.
+- **Sleep:** the screen never sleeps, dims or shows a screensaver. The page holds a Screen Wake Lock, but only
+  while its tab is visible, so the OS power settings still matter.
+- **Correct time:** at the end, the terminator matches the real time. Compare it with timeanddate.com's day/night map.
+- **Recovery:** after the display is turned off and on, the machine sleeps and wakes, or the monitor is unplugged and
+  replugged, the map comes back at the correct time within about 5 s and the wake lock returns.
+
+Record the date, machine, browser and results below.
+
+| Date | Machine / browser | Duration | Memory start → end | Result |
+|------|-------------------|----------|--------------------|--------|
+|      |                   |          |                    |        |
+
 ## Changing the look
 
-Design values (colours, twilight softness and so on) live in `config.json`. Edit it and reload.
+Design values (colours, the twilight's lux range and so on) live in `config.json`. Edit it and reload.
 The dev panel will be able to download a new `config.json`. Commit that file to change the public page.
 
 ## Regenerating data

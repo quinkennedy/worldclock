@@ -27,7 +27,8 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | Motion     | Real time on the public page; speed, set time, pause and presets in the dev GUI |
 | Day side   | Light "paper", CMYK Ben-Day overprint by land cover |
 | Night side | Dark; land a faint tint vs water; zenith star map; stylised moon |
-| Twilight   | Soft bands (civil / nautical / astronomical) |
+| Twilight   | One smooth gradient from a clear-sky illuminance model (log lux vs sun altitude), no stepped bands. Only its night/day lux range is in `config.json`, and it isn't in the dev GUI |
+| Twilight model (provisional) | `dayLux` 100000: the whole day side shades toward the terminator, brightest at the sub-solar point (revisit with 04's relief lighting). `nightLux` 0.001: full dark from about -18°. The model's physical constants stay in the shader, not config. Clear sky, no moonlight. Night/day colours blend in sRGB, not linear light |
 | Classes    | water, arid, forest, ice, grass/tundra |
 | Relief     | Lit by the live sun angle; exaggeration tunable via URL |
 | Moon       | At sub-lunar point, real phase, stylised size, always visible |
@@ -37,10 +38,10 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 ## Spec map
 | #  | Spec                       | Status  | Depends on |
 |----|----------------------------|---------|------------|
-| 01 | Sun, terminator & twilight | **v1**  | —          |
+| 01 | Sun, terminator & twilight | **done** (long-run test pending, see `DEV.md`) | — |
 | 02 | Data prep pipeline         | later   | —          |
 | 03 | Land-cover CMYK halftone   | later   | 01, 02     |
 | 04 | Relief lit by the sun      | later   | 01, 02     |
 | 05 | Night sky: zenith stars    | later   | 01         |
 | 06 | Moon                       | later   | 01         |
-| 07 | Dev GUI & time control     | **v1, after 01** | 01 (clock.js) |
+| 07 | Dev GUI & time control     | **v1, next** | 01 (clock.js) |

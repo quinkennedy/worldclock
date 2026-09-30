@@ -84,10 +84,8 @@ function draw() {
   gl.uniform3fv(u.uNightLand, hexToRgb(p.nightLand));
   gl.uniform3fv(u.uLetterbox, hexToRgb(p.letterbox));
   gl.uniform1f(u.uMinAspect, config.layout.minAspect);
-  gl.uniform1f(u.uSoftness, t.softness);
-  gl.uniform1f(u.uCivil, t.civil);
-  gl.uniform1f(u.uNautical, t.nautical);
-  gl.uniform1f(u.uAstronomical, t.astronomical);
+  gl.uniform1f(u.uNightLux, t.nightLux);
+  gl.uniform1f(u.uDayLux, t.dayLux);
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, state.landTex);

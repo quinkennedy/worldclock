@@ -14,12 +14,11 @@ const DEFAULTS = {
     minAspect: 1.6,
   },
   twilight: {
-    // Half-width, in degrees of sun altitude, of the blend at each band edge.
-    softness: 1.5,
-    // Brightness (0 = night, 1 = day) inside each twilight band.
-    civil: 0.62,
-    nautical: 0.34,
-    astronomical: 0.14,
+    // Ground illuminance in lux that reads as full night / full day. Brightness is log-scaled
+    // between them, following a clear-sky illuminance model of sun altitude. ~100000 shades the
+    // whole day side up to the sub-solar point; ~400 makes everything above the horizon flat day.
+    nightLux: 0.001,
+    dayLux: 100000,
   },
 };
 
