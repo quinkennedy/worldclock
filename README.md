@@ -19,6 +19,8 @@ is only day and night, and it's always true.
   that light level on a log scale, roughly as the eye perceives it.
 - **Sunlit relief.** Mountains and the seafloor are lit by the real sun angle at each point, from
   NOAA elevation data, so ranges throw long shade near dawn and dusk and flatten out at noon.
+- **The real night sky.** On the night side, each point shows the stars directly overhead there, from
+  the Yale Bright Star Catalogue, turning with sidereal time and coloured by each star's temperature.
 - **Generative imagery.** Everything is drawn by a WebGL shader from data. There are no photographs.
 - **Static and self-contained.** Plain HTML, JavaScript and GLSL, served as-is by GitHub Pages.
   No build step, server or accounts.

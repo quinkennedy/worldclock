@@ -130,3 +130,21 @@ export function createSlopeTexture(gl, elevationImage, vertSrc, slopeSrc, vao) {
   gl.generateMipmap(gl.TEXTURE_2D);
   return slope;
 }
+
+// Spec 05: a VAO over interleaved star vertices [x, y, z, r, g, b, vmag], at attribute locations 0, 1, 2.
+export function createStarBuffer(gl, vertices, stride) {
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+  const bytes = stride * 4;
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, bytes, 0);
+  gl.enableVertexAttribArray(1);
+  gl.vertexAttribPointer(1, 3, gl.FLOAT, false, bytes, 12);
+  gl.enableVertexAttribArray(2);
+  gl.vertexAttribPointer(2, 1, gl.FLOAT, false, bytes, 24);
+  gl.bindVertexArray(null);
+  return { vao, count: vertices.length / stride };
+}

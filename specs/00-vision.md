@@ -34,7 +34,7 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | Classes    | water, arid, forest, ice, grass/tundra. IGBP mapping table in 02 (open shrublands split at \|lat\| 55°; polar barren stays arid) |
 | Relief     | Lit by the live sun angle: the sun's altitude is taken against the terrain normal and drives the whole twilight model. Land and seafloor each have an exaggeration in `config.json` and the GUI (no query string) |
 | Moon       | At sub-lunar point, real phase, stylised size, always visible |
-| Stars      | True zenith sky: rotates with sidereal time |
+| Stars      | True zenith sky: rotates with sidereal time (GMST), J2000 precessed to date. No constellation lines, no Milky Way. Fades with 01's twilight on the smooth sphere. Coloured from B−V; size, alpha and colour strength in `config.json` |
 | Data       | Generative; offline prep scripts are OK when they make serving easier |
 | Data sources | Land cover and land mask: MODIS MCD12C1 v061 (latest year, manual Earthdata download). Elevation: ETOPO 2022 60s surface, with bathymetry. Stars: Yale BSC5, all ~9,100 stars. Details in 02 |
 | Data files | 4096x2048 cell-registered equirectangular. `land.png` = land fraction (inland lakes are water; Antarctic ice shelves are land, as ice; Arctic left as MODIS has it). `landcover.webp` = lossless RGB arid/forest/ice fractions (grass = land − sum). `elevation.webp` = lossless WebP, packed 16-bit metres+32768 in R/G (cell means), read with `texelFetch`. `stars.bin` = Float32 [ra, dec, vmag, B-V], J2000, precessed at runtime by 05. 10 MB budget is soft |
@@ -46,6 +46,7 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | 02 | Data prep pipeline         | **done** | —         |
 | 03 | Land-cover CMYK halftone   | later   | 01, 02     |
 | 04 | Relief lit by the sun      | **done** (long-run test pending) | 01, 02     |
-| 05 | Night sky: zenith stars    | later   | 01         |
+| 05 | Night sky: zenith stars    | **done** (long-run test pending) | 01         |
 | 06 | Moon                       | later   | 01         |
 | 07 | Dev GUI & time control     | **done** (long-run test pending, see `DEV.md`) | 01 (clock.js) |
+| 08 | Anti-solar sky             | idea    | 05         |

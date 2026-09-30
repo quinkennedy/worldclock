@@ -26,6 +26,18 @@ const DEFAULTS = {
     landExaggeration: 3,
     seaExaggeration: 0.5, // the seafloor (bathymetry); coasts blend the two by land fraction
   },
+  stars: {
+    // Spec 05: the zenith star map. Size and alpha run linearly in magnitude from the faintest
+    // drawn (magLimit) to brightMag and brighter. Sizes are disc diameters in degrees of longitude,
+    // so they scale with the screen. Stars fade out with the twilight, as the map brightens.
+    magLimit: 6,
+    brightMag: 0,
+    sizeFaint: 0.08,
+    sizeBright: 0.4,
+    alphaFaint: 0.3,
+    alphaBright: 0.9,
+    saturation: 1, // 0 = white; 1 = full colour from B-V
+  },
 };
 
 function merge(base, over) {

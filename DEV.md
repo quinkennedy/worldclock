@@ -24,6 +24,7 @@ The plain page runs in real time and has no controls. Add `?gui` for developer o
 | `/?gui&t=2026-03-20T12:00Z`           | March equinox, paused: the terminator is nearly vertical at about ±90° longitude. |
 | `/?gui&t=2026-06-21T12:00Z`           | June solstice, paused: the Arctic is fully lit and Antarctica fully dark. |
 | `/?gui&t=2026-03-20T00:40Z`           | Just after sunrise over the Himalaya: east-facing slopes lit, west-facing slopes dark. |
+| `/?gui&t=2026-01-15T00:00Z`           | Orion's belt overhead in the mid-Atlantic, at about 1°S, 30°W. The constellation is mirror-imaged, as on a celestial globe. |
 | `/?t=2026-06-21T12:00Z`               | `?t=` without `?gui` is ignored, so this shows live time. |
 
 `?t=` takes any ISO date/time, read as UTC when it has no zone. With `?gui`, the `g` key shows or
@@ -71,7 +72,7 @@ Record the date, machine, browser and results below.
 
 ## Changing the look
 
-Design values (colours, the twilight's lux range, relief exaggeration and so on) live in `config.json`. Edit it and reload,
+Design values (colours, the twilight's lux range, relief exaggeration, star size and brightness and so on) live in `config.json`. Edit it and reload,
 or tune them live in the dev panel (`?gui`), press **Download config** and replace the repo's `config.json`
 with the download. Commit that file to change the public page. The twilight's lux range is config-only.
 

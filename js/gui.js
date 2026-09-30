@@ -97,6 +97,15 @@ export function createGui({ config, requestRedraw, onVisibility }) {
   relief.addBinding(config.relief, 'landExaggeration', { label: 'land', min: 0, max: 100, step: 0.5 });
   relief.addBinding(config.relief, 'seaExaggeration', { label: 'sea', min: 0, max: 100, step: 0.5 });
 
+  const stars = design.addFolder({ title: 'Stars' });
+  stars.addBinding(config.stars, 'magLimit', { label: 'faintest mag', min: 1, max: 8, step: 0.1 });
+  stars.addBinding(config.stars, 'brightMag', { label: 'brightest mag', min: -1.5, max: 3, step: 0.1 });
+  stars.addBinding(config.stars, 'sizeFaint', { label: 'size faint °', min: 0, max: 2, step: 0.01 });
+  stars.addBinding(config.stars, 'sizeBright', { label: 'size bright °', min: 0, max: 2, step: 0.01 });
+  stars.addBinding(config.stars, 'alphaFaint', { label: 'alpha faint', min: 0, max: 1, step: 0.01 });
+  stars.addBinding(config.stars, 'alphaBright', { label: 'alpha bright', min: 0, max: 1, step: 0.01 });
+  stars.addBinding(config.stars, 'saturation', { label: 'colour', min: 0, max: 1, step: 0.01 });
+
   design.on('change', () => requestRedraw());
 
   const copyBtn = design.addButton({ title: 'Copy config' });

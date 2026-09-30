@@ -16,5 +16,14 @@
   "relief": {
     "landExaggeration": 3,
     "seaExaggeration": 0.5
+  },
+  "stars": {
+    "magLimit": 6,
+    "brightMag": 0,
+    "sizeFaint": 0.08,
+    "sizeBright": 0.4,
+    "alphaFaint": 0.3,
+    "alphaBright": 0.9,
+    "saturation": 1.0
   }
 }
