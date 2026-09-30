@@ -1,10 +1,12 @@
 #version 300 es
 // Spec 01: day/night terminator with a smooth twilight gradient from a clear-sky illuminance model.
+// Spec 04: relief. The sun's altitude is taken against the terrain normal, not the sphere's.
 precision highp float;
 
 uniform vec2 uResolution;   // canvas size in device pixels
 uniform vec3 uSunDir;       // unit vector to the sun, Earth-fixed (x: 0°,0°  y: 0°,90°E  z: N pole)
 uniform sampler2D uLand;    // land mask, equirectangular, row 0 = 90°N, col 0 = 180°W
+uniform sampler2D uSlope;   // terrain slopes, same layout: R = dh/d(east), G = dh/d(north), m/m
 
 uniform vec3 uDayWater;
 uniform vec3 uDayLand;
@@ -16,6 +18,9 @@ uniform float uMinAspect;   // narrowest width/height the map stretches to befor
 
 uniform float uNightLux;    // ground illuminance that reads as full night (and the sky's floor)
 uniform float uDayLux;      // ground illuminance that reads as full day
+
+uniform float uLandExaggeration; // vertical exaggeration of land relief
+uniform float uSeaExaggeration;  // vertical exaggeration of the seafloor (bathymetry)
 
 out vec4 fragColor;
 
@@ -53,18 +58,24 @@ void main() {
     return;
   }
 
+  // u wraps at ±180° (textures use REPEAT on s).
+  vec2 uv = vec2(lon / 360.0 + 0.5, 0.5 - lat / 180.0);
+  float land = texture(uLand, uv).r;
+
+  // Tilt the sphere normal by the exaggerated slope, in the local east/north/up frame.
+  // Coasts blend the two exaggerations by land fraction.
   float la = lat * DEG;
   float lo = lon * DEG;
-  vec3 normal = vec3(cos(la) * cos(lo), cos(la) * sin(lo), sin(la));
+  vec3 up = vec3(cos(la) * cos(lo), cos(la) * sin(lo), sin(la));
+  vec3 east = vec3(-sin(lo), cos(lo), 0.0);
+  vec3 north = vec3(-sin(la) * cos(lo), -sin(la) * sin(lo), cos(la));
+  vec2 slope = texture(uSlope, uv).rg * mix(uSeaExaggeration, uLandExaggeration, land);
+  vec3 normal = normalize(up - slope.x * east - slope.y * north);
   float altDeg = asin(clamp(dot(normal, uSunDir), -1.0, 1.0)) / DEG;
 
   // Brightness follows log illuminance, roughly as the eye perceives it.
   float lux = illuminance(altDeg) + uNightLux;
   float light = clamp(log(lux / uNightLux) / log(uDayLux / uNightLux), 0.0, 1.0);
-
-  // u wraps at ±180° (texture uses REPEAT on s).
-  vec2 uv = vec2(lon / 360.0 + 0.5, 0.5 - lat / 180.0);
-  float land = texture(uLand, uv).r;
 
   vec3 day = mix(uDayWater, uDayLand, land);
   vec3 night = mix(uNightWater, uNightLand, land);

@@ -2,7 +2,7 @@
 import * as clock from './clock.js';
 import { loadConfig, hexToRgb } from './config.js';
 import { sunDirection } from './sun.js';
-import { getContext, createProgram, createQuad, drawQuad, createMapTexture } from './gl.js';
+import { getContext, createProgram, createQuad, drawQuad, createMapTexture, createSlopeTexture } from './gl.js';
 
 const LIVE_INTERVAL_MS = 5000; // at 4K the terminator moves ~1 px every 22 s
 
@@ -13,11 +13,12 @@ const canvas = document.getElementById('map');
 
 const state = {
   config: null,
-  sources: null,     // { vert, frag, land } kept so a lost context can be rebuilt
+  sources: null,     // { vert, frag, slope, land, elevation } kept so a lost context can be rebuilt
   gl: null,
   prog: null,
   vao: null,
   landTex: null,
+  slopeTex: null,    // spec 04: terrain slopes, built once from the elevation data
   lost: false,
   gui: null,         // spec 07's panel, only with ?gui
   guiVisible: false,
@@ -41,6 +42,7 @@ function initGL() {
   state.prog = createProgram(gl, state.sources.vert, state.sources.frag);
   state.vao = createQuad(gl);
   state.landTex = createMapTexture(gl, state.sources.land);
+  state.slopeTex = createSlopeTexture(gl, state.sources.elevation, state.sources.vert, state.sources.slope, state.vao);
 }
 
 // --- sizing -----------------------------------------------------------------
@@ -74,6 +76,7 @@ function draw() {
   const u = prog.uniforms;
   const p = config.palette;
   const t = config.twilight;
+  const r = config.relief;
 
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.useProgram(prog.program);
@@ -87,10 +90,15 @@ function draw() {
   gl.uniform1f(u.uMinAspect, config.layout.minAspect);
   gl.uniform1f(u.uNightLux, t.nightLux);
   gl.uniform1f(u.uDayLux, t.dayLux);
+  gl.uniform1f(u.uLandExaggeration, r.landExaggeration);
+  gl.uniform1f(u.uSeaExaggeration, r.seaExaggeration);
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, state.landTex);
   gl.uniform1i(u.uLand, 0);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, state.slopeTex);
+  gl.uniform1i(u.uSlope, 1);
 
   drawQuad(gl, state.vao);
 }
@@ -181,14 +189,16 @@ async function loadGui() {
 // --- start ------------------------------------------------------------------
 
 async function start() {
-  const [config, vert, frag, land] = await Promise.all([
+  const [config, vert, frag, slope, land, elevation] = await Promise.all([
     loadConfig(),
     fetchText('shaders/quad.vert'),
     fetchText('shaders/sun.frag'),
+    fetchText('shaders/slope.frag'),
     fetchBitmap('data/land.png'),
+    fetchBitmap('data/elevation.webp'),
   ]);
   state.config = config;
-  state.sources = { vert, frag, land };
+  state.sources = { vert, frag, slope, land, elevation };
   state.gl = getContext(canvas);
   initGL();
 

@@ -79,3 +79,54 @@ export function createMapTexture(gl, image) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   return tex;
 }
+
+// Spec 04: runs the slope shader once over the packed elevation image and returns an RG16F texture
+// of terrain slopes (wraps in longitude, clamps at the poles, mipmapped). The packed source and the
+// program are deleted. Rendering to RG16F needs EXT_color_buffer_float; without it the map is flat.
+export function createSlopeTexture(gl, elevationImage, vertSrc, slopeSrc, vao) {
+  const slope = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, slope);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  if (!gl.getExtension('EXT_color_buffer_float')) {
+    console.warn('relief: EXT_color_buffer_float unavailable, drawing without relief');
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, 1, 1, 0, gl.RG, gl.HALF_FLOAT, new Uint16Array(2));
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    return slope;
+  }
+
+  const { width, height } = elevationImage;
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, width, height, 0, gl.RG, gl.HALF_FLOAT, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  // Packed heights: exact bytes, read only with texelFetch.
+  const packed = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, packed);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, elevationImage);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  const prog = createProgram(gl, vertSrc, slopeSrc);
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, slope, 0);
+  gl.viewport(0, 0, width, height);
+  gl.useProgram(prog.program);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, packed);
+  gl.uniform1i(prog.uniforms.uElevation, 0);
+  drawQuad(gl, vao);
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.deleteFramebuffer(fbo);
+  gl.deleteTexture(packed);
+  gl.deleteProgram(prog.program);
+
+  gl.bindTexture(gl.TEXTURE_2D, slope);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  return slope;
+}

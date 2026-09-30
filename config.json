@@ -2,8 +2,8 @@
   "palette": {
     "dayWater": "#ece6d8",
     "dayLand": "#dcd2bc",
-    "nightWater": "#0a0d16",
-    "nightLand": "#141926",
+    "nightWater": "#070910",
+    "nightLand": "#000000",
     "letterbox": "#000000"
   },
   "layout": {
@@ -12,5 +12,9 @@
   "twilight": {
     "nightLux": 0.001,
     "dayLux": 100000
+  },
+  "relief": {
+    "landExaggeration": 3,
+    "seaExaggeration": 0.5
   }
 }

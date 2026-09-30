@@ -20,6 +20,12 @@ const DEFAULTS = {
     nightLux: 0.001,
     dayLux: 100000,
   },
+  relief: {
+    // Vertical exaggeration of the terrain that the sun lights (spec 04). 0 is a smooth sphere.
+    // The sun's altitude is taken against the tilted terrain, so relief shows most near the terminator.
+    landExaggeration: 3,
+    seaExaggeration: 0.5, // the seafloor (bathymetry); coasts blend the two by land fraction
+  },
 };
 
 function merge(base, over) {

@@ -93,6 +93,10 @@ export function createGui({ config, requestRedraw, onVisibility }) {
   }
   twilight.addBinding(config.layout, 'minAspect', { min: 1, max: 2, step: 0.01 });
 
+  const relief = design.addFolder({ title: 'Relief' });
+  relief.addBinding(config.relief, 'landExaggeration', { label: 'land', min: 0, max: 100, step: 0.5 });
+  relief.addBinding(config.relief, 'seaExaggeration', { label: 'sea', min: 0, max: 100, step: 0.5 });
+
   design.on('change', () => requestRedraw());
 
   const copyBtn = design.addButton({ title: 'Copy config' });
