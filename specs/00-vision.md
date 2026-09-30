@@ -33,7 +33,7 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | Twilight model (provisional) | `dayLux` 100000: the whole day side shades toward the terminator, brightest at the sub-solar point (revisit with 04's relief lighting). `nightLux` 0.001: full dark from about -18°. The model's physical constants stay in the shader, not config. Clear sky. Moonlight (14) adds its lux to the sun's before the same mapping. Night/day colours blend in sRGB, not linear light |
 | Classes    | water, arid, forest, ice, grass/tundra. IGBP mapping table in 02 (open shrublands split at \|lat\| 55°; polar barren stays arid) |
 | Relief     | Lit by the live sun angle: the sun's altitude is taken against the terrain normal and drives the whole twilight model. Land and seafloor each have an exaggeration in `config.json` and the GUI (no query string) |
-| Sun & moon discs | Thin outlines at the sub-solar and sub-lunar points, always visible; the moon shows its real phase. Stylised size, each with its own scale in config and the GUI. Same line, different colours |
+| Sun & moon discs | Thin outlines at the sub-solar and sub-lunar points, always visible; the moon shows its real phase. Stylised size, each with its own scale in config and the GUI. Same line on both sides of the terminator, different colours. Where they overlap, both outlines show. The moon's phase is a soft terminator line, not a fill |
 | Moonlight  | Strictly physical (phase, distance, altitude; no gain or tint), through 01's lux-to-colour mapping. Lights relief against the terrain normal and dims the stars. `moonlight.enabled` toggle in config and the GUI |
 | Stars      | True zenith sky: rotates with sidereal time (GMST), J2000 precessed to date. No constellation lines, no Milky Way. Fades with 01's twilight on the smooth sphere. Coloured from B−V; size, alpha and colour strength in `config.json` |
 | Data       | Generative; offline prep scripts are OK when they make serving easier |
@@ -51,7 +51,7 @@ stage changes; its number never changes. `ready` means every key decision has be
 | 03 | Land-cover CMYK halftone   | defined | 01, 02     |
 | 04 | Relief lit by the sun      | **done** (long-run test pending) | 01, 02     |
 | 05 | Night sky: zenith stars    | **done** (long-run test pending) | 01         |
-| 06 | Sun & moon discs           | defined | 01         |
+| 06 | Sun & moon discs           | **done** (long-run test pending) | 01         |
 | 07 | Dev GUI & time control     | **done** (long-run test pending, see `DEV.md`) | 01 (clock.js) |
 | 08 | Anti-solar sky             | idea    | 05         |
 | 09 | Ben-Day dot design iteration | idea (prototype first) | (03) |

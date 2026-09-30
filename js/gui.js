@@ -2,10 +2,18 @@
 // never fetches Tweakpane. `g` shows or hides the panel.
 import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
 import * as clock from './clock.js';
-import { solarLongitudeTime } from './sun.js';
-import { nextMoonPhase } from './moon.js';
+import { solarLongitudeTime, sunDirection } from './sun.js';
+import { nextMoonPhase, moonPosition } from './moon.js';
 
 const MAX_SPEED_EXP = 5; // x1 .. x100000
+
+// Spec 06 check: lit percentage and sub-lunar point, to compare with a reference such as timeanddate.com.
+function formatMoon(utcMs) {
+  const m = moonPosition(utcMs, sunDirection(utcMs));
+  const lat = `${Math.abs(m.lat).toFixed(1)}°${m.lat < 0 ? 'S' : 'N'}`;
+  const lon = `${Math.abs(m.lon).toFixed(1)}°${m.lon < 0 ? 'W' : 'E'}`;
+  return `${(m.illuminated * 100).toFixed(1)}% lit, ${lat} ${lon}`;
+}
 
 function formatSpeed(exp) {
   return 'x' + Math.round(10 ** exp).toLocaleString('en-US');
@@ -41,9 +49,11 @@ export function createGui({ config, requestRedraw, onVisibility }) {
     speedExp: 0,
     sign: 1,
     set: clock.formatUtc(clock.simNow()),
+    moon: formatMoon(clock.simNow()),
   };
 
   const readout = time.addBinding(t, 'now', { label: 'sim UTC', readonly: true, interval: 0 });
+  const moonReadout = time.addBinding(t, 'moon', { label: 'moon', readonly: true, interval: 0 });
 
   const setSpeed = () => { if (!syncing) clock.setSpeed(t.sign * 10 ** t.speedExp); };
   time.addBinding(t, 'speedExp', { label: 'speed', min: 0, max: MAX_SPEED_EXP, step: 0.01, format: formatSpeed })
@@ -105,6 +115,17 @@ export function createGui({ config, requestRedraw, onVisibility }) {
   stars.addBinding(config.stars, 'alphaFaint', { label: 'alpha faint', min: 0, max: 1, step: 0.01 });
   stars.addBinding(config.stars, 'alphaBright', { label: 'alpha bright', min: 0, max: 1, step: 0.01 });
   stars.addBinding(config.stars, 'saturation', { label: 'colour', min: 0, max: 1, step: 0.01 });
+
+  const discs = design.addFolder({ title: 'Discs' });
+  discs.addBinding(config.discs, 'sunSize', { label: 'sun size °', min: 0.5, max: 30, step: 0.1 });
+  discs.addBinding(config.discs, 'moonSize', { label: 'moon size °', min: 0.5, max: 30, step: 0.1 });
+  discs.addBinding(config.discs, 'lineWidth', { label: 'line °', min: 0.02, max: 2, step: 0.01 });
+  discs.addBinding(config.discs, 'terminatorSoftness', { label: 'terminator soft °', min: 0, max: 3, step: 0.01 });
+  discs.addBinding(config.discs, 'sunColor', { label: 'sun', view: 'color' });
+  discs.addBinding(config.discs, 'moonColor', { label: 'moon', view: 'color' });
+  discs.addBinding(config.discs, 'moonAlpha', { label: 'moon alpha', min: 0, max: 1, step: 0.01 });
+  discs.addBinding(config.discs, 'moonFill', { label: 'moon fill' });
+  discs.addBinding(config.discs, 'moonOutline', { label: 'moon outline' });
 
   design.on('change', () => requestRedraw());
 
@@ -171,8 +192,11 @@ export function createGui({ config, requestRedraw, onVisibility }) {
 
   return {
     tick() {
-      t.now = clock.formatUtc(clock.simNow());
+      const now = clock.simNow();
+      t.now = clock.formatUtc(now);
+      t.moon = formatMoon(now);
       readout.refresh();
+      moonReadout.refresh();
     },
   };
 }

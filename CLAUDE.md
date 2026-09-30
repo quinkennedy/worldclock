@@ -15,7 +15,7 @@ night: no text, numbers or UI. It's hosted as a static GitHub Pages site and run
 
 When a spec changes stage, rename the file (`git mv`) and update its row in the `00-vision.md` spec map. The number
 never changes; refer to specs by number ("spec 05") in prose.
-Done: 01, 02, 04, 05, 07 (long-run test pending for 01, 04, 05, 07). The next spec isn't chosen yet, so ask. Don't
+Done: 01, 02, 04, 05, 06, 07 (long-run test pending for 01, 04, 05, 06, 07). The next spec isn't chosen yet, so ask. Don't
 start other specs unless asked.
 Every spec that touches `js/` or `shaders/` needs the long-run test in `DEV.md` before it's considered shipped.
 If a decision isn't in a spec, ask; don't invent it. Record new decisions in `00-vision.md`.
@@ -32,7 +32,7 @@ js/clock.js         sim clock: the ONLY source of time (speed, pause, set; ?t= o
 js/config.js        loads config.json, with built-in fallback defaults
 js/gui.js           Tweakpane dev panel, dynamically imported only with ?gui
 js/sun.js           NOAA solar position (pure functions, UTC ms in)
-js/moon.js          lunar phases for the GUI presets (Meeus); spec 06 adds the sub-lunar point
+js/moon.js          lunar phases for the GUI presets (Meeus ch. 49); sub-lunar point and phase (ch. 47, spec 06)
 js/stars.js         GMST, precession to date, B-V colours for the zenith stars (spec 05)
 js/gl.js            WebGL setup, full-screen quad
 shaders/            shaders (lighting, stars, later halftone/moon); twilight.glsl is shared via #include

@@ -20,10 +20,22 @@ Both are always visible, on the day or night side.
 - The real sun and moon look nearly the same size in the sky. With coin-sized discs, the moon overlaps the sun at
   most new moons (it passes 0–5° from the sun), not only at real eclipses. Accepted: the scales are tunable.
 
-## Open questions
-- Default scale for each disc, and the two outline colours (pick by eye in the GUI).
-- Line weight, and whether the moon's line is heavier on the night side.
-- Draw order where the discs overlap.
+## Decisions (confirmed by Quin)
+- **Same line everywhere.** One line width for both discs, day or night side; the moon's line isn't heavier at night.
+- **Lines just cross.** Where the discs overlap, both outlines draw in full; neither hides the other.
+- **Phase as a soft terminator line.** A feathered line along the visible half of the terminator ellipse, limb to
+  limb, in the moon's colour. No fill.
+- Defaults are starting points, to be picked by eye in the GUI: diameters 8° of longitude each, line 0.3°,
+  terminator feather 0.5°, sun `#d9622b`, moon `#8a9bc4`.
+
+## Implementation
+- `js/moon.js`: `moonEquatorial()` (Meeus ch. 47, terms ≥ 0.002°) and `moonPosition()`, which gives the sub-lunar
+  point, distance, phase angle, lit fraction and the bearing of the sun from the sub-lunar point (14 uses the same).
+  Checked against Meeus example 47.a (0.003°) and the USNO API (position within 0.01°, lit % within 0.5).
+- `shaders/disc.vert` / `disc.frag`: one screen-aligned square per disc, drawn as 3 instances (−360°, 0, +360°).
+  Discs are round on screen and sized in degrees of longitude, like the stars. The lit direction is the bearing to
+  the sun converted to map directions (east scaled by 1/cos lat).
+- GUI: a Discs folder, and a read-only "moon" line (lit %, sub-lunar point) in the Time folder for spot checks.
 
 ## Acceptance
 - The phase matches a reference (e.g. timeanddate.com) at 4 spot dates, and the moon's position is within 1°.

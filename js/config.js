@@ -38,6 +38,21 @@ const DEFAULTS = {
     alphaBright: 0.9,
     saturation: 1, // 0 = white; 1 = full colour from B-V
   },
+  discs: {
+    // Spec 06: outlines of the sun and moon at the sub-solar and sub-lunar points. Sizes are disc
+    // diameters and widths in degrees of longitude, so they scale with the screen. Both use the same line;
+    // the moon also draws its phase terminator with that line, feathered by terminatorSoftness.
+    // moonFill (experiment): fill the lit part instead, its edge feathered by terminatorSoftness.
+    sunSize: 8,
+    moonSize: 8,
+    lineWidth: 0.3,
+    terminatorSoftness: 0.5,
+    sunColor: '#d9622b',
+    moonColor: '#8a9bc4',
+    moonAlpha: 1,     // opacity of everything the moon draws
+    moonFill: false,
+    moonOutline: true, // the moon's limb circle; off with moonFill on leaves only the lit shape
+  },
 };
 
 function merge(base, over) {

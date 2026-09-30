@@ -1,7 +1,8 @@
 // Setup, render loop and wake lock.
 import * as clock from './clock.js';
 import { loadConfig, hexToRgb } from './config.js';
-import { sunDirection } from './sun.js';
+import { sunDirection, sunPosition } from './sun.js';
+import { moonPosition } from './moon.js';
 import { skyMatrix, starVertices, STAR_STRIDE } from './stars.js';
 import {
   getContext, createProgram, createQuad, drawQuad, createMapTexture, createSlopeTexture, createStarBuffer,
@@ -16,7 +17,7 @@ const canvas = document.getElementById('map');
 
 const state = {
   config: null,
-  sources: null,     // { vert, frag, slope, starVert, starFrag, land, elevation, stars } kept so a lost context can be rebuilt
+  sources: null,     // { vert, frag, slope, starVert, starFrag, discVert, discFrag, land, elevation, stars } kept so a lost context can be rebuilt
   gl: null,
   prog: null,
   vao: null,
@@ -24,6 +25,7 @@ const state = {
   slopeTex: null,    // spec 04: terrain slopes, built once from the elevation data
   starProg: null,    // spec 05: zenith stars
   starBuf: null,     // { vao, count }
+  discProg: null,    // spec 06: sun and moon discs
   lost: false,
   gui: null,         // spec 07's panel, only with ?gui
   guiVisible: false,
@@ -66,6 +68,7 @@ function initGL() {
   state.slopeTex = createSlopeTexture(gl, state.sources.elevation, state.sources.vert, state.sources.slope, state.vao);
   state.starProg = createProgram(gl, state.sources.starVert, state.sources.starFrag);
   state.starBuf = createStarBuffer(gl, state.sources.stars, STAR_STRIDE);
+  state.discProg = createProgram(gl, state.sources.discVert, state.sources.discFrag);
 }
 
 // --- sizing -----------------------------------------------------------------
@@ -127,6 +130,7 @@ function draw() {
 
   drawQuad(gl, state.vao);
   drawStars(now, sunDir);
+  drawDiscs(now, sunDir);
 }
 
 // Spec 05: stars alpha-blended over the map. They fade out with the twilight, so the day side gets none.
@@ -154,6 +158,47 @@ function drawStars(now, sunDir) {
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.bindVertexArray(starBuf.vao);
   gl.drawArraysInstanced(gl.POINTS, 0, starBuf.count, 3); // copies at −360°, 0, +360°
+  gl.disable(gl.BLEND);
+}
+
+// Spec 06: outlines of the sun and moon over everything, the moon with its phase. Where they overlap
+// both sets of lines show.
+function drawDiscs(now, sunDir) {
+  const { gl, discProg, config } = state;
+  const u = discProg.uniforms;
+  const d = config.discs;
+  const sun = sunPosition(now);
+  const moon = moonPosition(now, sunDir);
+
+  gl.useProgram(discProg.program);
+  gl.uniform2f(u.uResolution, canvas.width, canvas.height);
+  gl.uniform1f(u.uMinAspect, config.layout.minAspect);
+  gl.uniform1f(u.uLineWidth, d.lineWidth);
+  gl.uniform1f(u.uSoftness, d.terminatorSoftness);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.bindVertexArray(state.vao);
+
+  gl.uniform2f(u.uCentre, sun.lon, sun.lat);
+  gl.uniform1f(u.uDiameter, d.sunSize);
+  gl.uniform3fv(u.uColor, hexToRgb(d.sunColor));
+  gl.uniform1i(u.uTerminator, 0);
+  gl.uniform1i(u.uFill, 0);
+  gl.uniform1i(u.uOutline, 1);
+  gl.uniform1f(u.uAlpha, 1);
+  gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, 3); // copies at −360°, 0, +360°
+
+  gl.uniform2f(u.uCentre, moon.lon, moon.lat);
+  gl.uniform1f(u.uDiameter, d.moonSize);
+  gl.uniform3fv(u.uColor, hexToRgb(d.moonColor));
+  gl.uniform1i(u.uTerminator, 1);
+  gl.uniform1i(u.uFill, d.moonFill ? 1 : 0);
+  gl.uniform1i(u.uOutline, d.moonOutline ? 1 : 0);
+  gl.uniform1f(u.uAlpha, d.moonAlpha);
+  gl.uniform1f(u.uCosPhase, Math.cos(moon.phaseAngle * Math.PI / 180));
+  gl.uniform2f(u.uLitEN, Math.sin(moon.litBearing), Math.cos(moon.litBearing));
+  gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, 3);
+
   gl.disable(gl.BLEND);
 }
 
@@ -243,19 +288,23 @@ async function loadGui() {
 // --- start ------------------------------------------------------------------
 
 async function start() {
-  const [config, vert, frag, slope, starVert, starFrag, land, elevation, stars] = await Promise.all([
+  const [config, vert, frag, slope, starVert, starFrag, discVert, discFrag, land, elevation, stars] = await Promise.all([
     loadConfig(),
     fetchText('shaders/quad.vert'),
     fetchShader('shaders/sun.frag'),
     fetchText('shaders/slope.frag'),
     fetchShader('shaders/stars.vert'),
     fetchText('shaders/stars.frag'),
+    fetchText('shaders/disc.vert'),
+    fetchText('shaders/disc.frag'),
     fetchBitmap('data/land.png'),
     fetchBitmap('data/elevation.webp'),
     fetchBuffer('data/stars.bin'),
   ]);
   state.config = config;
-  state.sources = { vert, frag, slope, starVert, starFrag, land, elevation, stars: starVertices(stars) };
+  state.sources = {
+    vert, frag, slope, starVert, starFrag, discVert, discFrag, land, elevation, stars: starVertices(stars),
+  };
   state.gl = getContext(canvas);
   initGL();
 

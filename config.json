@@ -25,5 +25,16 @@
     "alphaFaint": 0.3,
     "alphaBright": 0.9,
     "saturation": 1.0
+  },
+  "discs": {
+    "sunSize": 8,
+    "moonSize": 6,
+    "lineWidth": 0.3,
+    "terminatorSoftness": 0,
+    "sunColor": "#d6ba7a",
+    "moonColor": "#244475",
+    "moonAlpha": 0.5,
+    "moonFill": true,
+    "moonOutline": false
   }
 }
