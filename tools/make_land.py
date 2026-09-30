@@ -15,7 +15,7 @@ Outputs, both 4096x2048, row 0 = 90N, column 0 = 180W:
 - land.png: 8-bit L, land fraction (255 = land). Inland lakes are water.
 - landcover.webp: lossless WebP, 8-bit RGB fractions of each cell, R = arid,
   G = forest, B = ice. Grass/tundra = land - R - G - B, and never goes negative.
-The IGBP -> 5-class table is in specs/02-data-prep.md.
+The IGBP -> 5-class table is in specs/02-data-prep.done.md.
 
 Source: Friedl, M., Sulla-Menashe, D. (2022). MODIS/Terra+Aqua Land Cover Type Yearly
 L3 Global 0.05Deg CMG V061. NASA EOSDIS LP DAAC. doi:10.5067/MODIS/MCD12C1.061

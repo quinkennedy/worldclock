@@ -5,10 +5,18 @@ globe is unwrapped in real time onto an equirectangular map. People read it only
 night: no text, numbers or UI. It's hosted as a static GitHub Pages site and runs unattended for weeks on one monitor.
 
 ## Specs (source of truth)
-`specs/00-vision.md` holds the goal and locked decisions. Each `specs/0N-*.md` is a small, standalone spec.
-**v1 is built: `specs/01-sun-terminator.md` and `specs/07-dev-gui.md` are done** (long-run test pending). **02 (data prep) is done** (data files in `data/`, scripts in `tools/`). **04 (relief) is done** (long-run test pending). **05 (stars) is done** (long-run test pending). The next spec isn't chosen yet, so ask. Don't start other specs unless asked.
-**09–12 are prototype ideas.** Before starting one, interview the user for the real goal, split it into small
-sub-specs if needed, and get explicit confirmation of every key decision. Each of those specs spells this out.
+`specs/00-vision.md` holds the goal and locked decisions. Each other spec is small and standalone, named
+`NN-name.<stage>.md`. The stage suffix is one of:
+- `idea`: rough. Before work starts, interview the user for the real goal, split it into small sub-specs if needed,
+  and get explicit confirmation of every key decision (each idea spec spells this out).
+- `defined`: outcome and scope are clear, but open questions remain.
+- `ready`: every key decision confirmed by the user; can be built as written.
+- `done`: built.
+
+When a spec changes stage, rename the file (`git mv`) and update its row in the `00-vision.md` spec map. The number
+never changes; refer to specs by number ("spec 05") in prose.
+Done: 01, 02, 04, 05, 07 (long-run test pending for 01, 04, 05, 07). The next spec isn't chosen yet, so ask. Don't
+start other specs unless asked.
 Every spec that touches `js/` or `shaders/` needs the long-run test in `DEV.md` before it's considered shipped.
 If a decision isn't in a spec, ask; don't invent it. Record new decisions in `00-vision.md`.
 

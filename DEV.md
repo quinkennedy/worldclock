@@ -79,7 +79,7 @@ with the download. Commit that file to change the public page. The twilight's lu
 ## Regenerating data
 
 `data/` holds committed files, so the site never builds them. The scripts in `tools/` regenerate
-them (formats and sources are in `specs/02-data-prep.md`). They need Python 3.12 or later:
+them (formats and sources are in `specs/02-data-prep.done.md`). They need Python 3.12 or later:
 
 ```
 pip install -r tools/requirements.txt

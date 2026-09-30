@@ -28,32 +28,39 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | Config     | Tunables in `config.json`; GUI copies or downloads it; commit the file to change defaults |
 | Motion     | Real time on the public page; speed, set time, pause and presets in the dev GUI |
 | Day side   | Light "paper", CMYK Ben-Day overprint by land cover |
-| Night side | Dark; land a faint tint vs water; zenith star map; stylised moon |
+| Night side | Dark; land a faint tint vs water; zenith star map; stylised moon; physical moonlight (14) |
 | Twilight   | One smooth gradient from a clear-sky illuminance model (log lux vs sun altitude), no stepped bands. Only its night/day lux range is in `config.json`, and it isn't in the dev GUI |
-| Twilight model (provisional) | `dayLux` 100000: the whole day side shades toward the terminator, brightest at the sub-solar point (revisit with 04's relief lighting). `nightLux` 0.001: full dark from about -18°. The model's physical constants stay in the shader, not config. Clear sky, no moonlight. Night/day colours blend in sRGB, not linear light |
+| Twilight model (provisional) | `dayLux` 100000: the whole day side shades toward the terminator, brightest at the sub-solar point (revisit with 04's relief lighting). `nightLux` 0.001: full dark from about -18°. The model's physical constants stay in the shader, not config. Clear sky. Moonlight (14) adds its lux to the sun's before the same mapping. Night/day colours blend in sRGB, not linear light |
 | Classes    | water, arid, forest, ice, grass/tundra. IGBP mapping table in 02 (open shrublands split at \|lat\| 55°; polar barren stays arid) |
 | Relief     | Lit by the live sun angle: the sun's altitude is taken against the terrain normal and drives the whole twilight model. Land and seafloor each have an exaggeration in `config.json` and the GUI (no query string) |
-| Moon       | At sub-lunar point, real phase, stylised size, always visible |
+| Sun & moon discs | Thin outlines at the sub-solar and sub-lunar points, always visible; the moon shows its real phase. Stylised size, each with its own scale in config and the GUI. Same line, different colours |
+| Moonlight  | Strictly physical (phase, distance, altitude; no gain or tint), through 01's lux-to-colour mapping. Lights relief against the terrain normal and dims the stars. `moonlight.enabled` toggle in config and the GUI |
 | Stars      | True zenith sky: rotates with sidereal time (GMST), J2000 precessed to date. No constellation lines, no Milky Way. Fades with 01's twilight on the smooth sphere. Coloured from B−V; size, alpha and colour strength in `config.json` |
 | Data       | Generative; offline prep scripts are OK when they make serving easier |
 | Data sources | Land cover and land mask: MODIS MCD12C1 v061 (latest year, manual Earthdata download). Elevation: ETOPO 2022 60s surface, with bathymetry. Stars: Yale BSC5, all ~9,100 stars. Details in 02 |
 | Data files | 4096x2048 cell-registered equirectangular. `land.png` = land fraction (inland lakes are water; Antarctic ice shelves are land, as ice; Arctic left as MODIS has it). `landcover.webp` = lossless RGB arid/forest/ice fractions (grass = land − sum). `elevation.webp` = lossless WebP, packed 16-bit metres+32768 in R/G (cell means), read with `texelFetch`. `stars.bin` = Float32 [ra, dec, vmag, B-V], J2000, precessed at runtime by 05. 10 MB budget is soft |
 
 ## Spec map
+Spec files are named `NN-name.<stage>.md`, with stage `idea`, `defined`, `ready` or `done`. A spec is renamed when its
+stage changes; its number never changes. `ready` means every key decision has been confirmed by Quin.
+
 | #  | Spec                       | Status  | Depends on |
 |----|----------------------------|---------|------------|
 | 01 | Sun, terminator & twilight | **done** (long-run test pending, see `DEV.md`) | — |
 | 02 | Data prep pipeline         | **done** | —         |
-| 03 | Land-cover CMYK halftone   | later   | 01, 02     |
+| 03 | Land-cover CMYK halftone   | defined | 01, 02     |
 | 04 | Relief lit by the sun      | **done** (long-run test pending) | 01, 02     |
 | 05 | Night sky: zenith stars    | **done** (long-run test pending) | 01         |
-| 06 | Moon                       | later   | 01         |
+| 06 | Sun & moon discs           | defined | 01         |
 | 07 | Dev GUI & time control     | **done** (long-run test pending, see `DEV.md`) | 01 (clock.js) |
 | 08 | Anti-solar sky             | idea    | 05         |
-| 09 | Ben-Day dot design iteration | idea, prototype first | (03) |
-| 10 | Reaction-diffusion water   | idea, prototype first | (02, 09) |
-| 11 | Orange-peel projection     | idea, prototype first | 01 |
-| 12 | Globe views                | idea, prototype first | 01 (06 for moon views) |
+| 09 | Ben-Day dot design iteration | idea (prototype first) | (03) |
+| 10 | Reaction-diffusion water   | idea (prototype first) | (02, 09) |
+| 11 | Orange-peel projection     | idea (prototype first) | 01 |
+| 12 | Globe views                | idea (prototype first) | 01 (06 for moon views) |
+| 13 | Spec stage colours in VS Code (dev tooling) | idea | — |
+| 14 | Moonlight                  | defined | 06 (touches 01, 04, 05) |
+| 15 | Sunset & sunrise colour    | idea (prototype first) | 01 |
 
-Specs 09–12 are design prototypes built outside `index.html`. Before any of them starts, interview Quin for the real
+Specs 09–12 and 15 are design prototypes built outside `index.html`. Before any of them starts, interview Quin for the real
 goal, split it into small sub-specs if needed, and have Quin explicitly confirm each key decision (see each spec).
