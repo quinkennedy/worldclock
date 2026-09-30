@@ -1,0 +1,5 @@
+# Offline data prep (spec 02). Never needed to run the site.
+numpy==2.5.3
+Pillow==12.3.0
+pyhdf==0.11.7
+h5py==3.16.0

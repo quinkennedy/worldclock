@@ -7,7 +7,8 @@ visibly move relative to the terminator.
 
 ## Scope
 - Zenith at (lat, lon) = celestial (Dec = lat, RA = lon + GMST). Compute GMST in JS and pass it as a uniform.
-- Stars from 02's catalogue, drawn as points with size/brightness from magnitude.
+- Stars from 02's `stars.bin` (BSC5 to V ≈ 6.5, with B-V), drawn as points with size/brightness from magnitude.
+- Positions are J2000: precess them to the sim date at runtime (about 0.36° by 2026).
 - Fades in with the twilight gradient from 01: none in day, full in astronomical night.
 - Drawn over the night-side land/water tint and kept subtle, so the tint still reads.
 

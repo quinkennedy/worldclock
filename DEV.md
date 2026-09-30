@@ -76,12 +76,19 @@ with the download. Commit that file to change the public page. The twilight's lu
 
 ## Regenerating data
 
-`data/` holds committed textures, so the site never builds them. To regenerate the land mask
-(needs Python with Pillow):
+`data/` holds committed files, so the site never builds them. The scripts in `tools/` regenerate
+them (formats and sources are in `specs/02-data-prep.md`). They need Python 3.12 or later:
 
 ```
-python tools/make_land_mask.py
+pip install -r tools/requirements.txt
+python tools/make_land.py        # data/land.png + data/landcover.webp
+python tools/make_elevation.py   # data/elevation.webp
+python tools/make_stars.py       # data/stars.bin
 ```
+
+Raw downloads are cached in `tools/cache/` (gitignored). The scripts download ETOPO 2022 (also used by
+`make_land.py` for the Antarctic ice shelves) and the star catalogue themselves. `make_land.py` also needs the MODIS MCD12C1 v061 `.hdf`, which requires a free NASA Earthdata login:
+download the latest year from https://search.earthdata.nasa.gov/ (search `MCD12C1`) into `tools/cache/`.
 
 ## Deployment
 

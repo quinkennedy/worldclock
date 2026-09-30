@@ -5,7 +5,8 @@ Mountains are shaded by the *actual* sun at each point, so they cast long shadow
 This is the "simulated globe, unwrapped" at its most visible.
 
 ## Scope
-- In the shader, perturb the sphere normal using elevation gradients (from 02's texture).
+- In the shader, perturb the sphere normal using elevation gradients (from 02's `elevation.webp`: packed
+  16-bit, so read with `texelFetch` and filter manually; it includes bathymetry).
 - Lambert shading from the per-pixel sun direction (01). The result feeds dot size in 03.
 - Vertical exaggeration via `?relief=<n>`. Pick the default on the real display.
 - Correct the east-west gradient by 1/cos(lat) so relief near the poles isn't distorted.

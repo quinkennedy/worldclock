@@ -17,9 +17,17 @@ is only day and night, and it's always true.
 - **Physically based twilight.** A clear-sky model estimates how much light reaches the ground
   at each sun altitude, from full daylight through sunset to starlight. Brightness follows
   that light level on a log scale, roughly as the eye perceives it.
-- **Generative imagery.** Everything is drawn by a WebGL shader from data (a land mask from
-  [Natural Earth](https://www.naturalearthdata.com/)). There are no photographs.
+- **Generative imagery.** Everything is drawn by a WebGL shader from data. There are no photographs.
 - **Static and self-contained.** Plain HTML, JavaScript and GLSL, served as-is by GitHub Pages.
   No build step, server or accounts.
 
 It's made to run unattended for weeks on a single gallery monitor.
+
+## Data sources
+
+- **Land and land cover:** NASA MODIS MCD12C1 v061 (Friedl & Sulla-Menashe, NASA EOSDIS LP DAAC,
+  [doi:10.5067/MODIS/MCD12C1.061](https://doi.org/10.5067/MODIS/MCD12C1.061)).
+- **Elevation:** NOAA NCEI ETOPO 2022 Global Relief Model
+  ([doi:10.25921/fd45-gt74](https://doi.org/10.25921/fd45-gt74)).
+- **Stars:** Yale Bright Star Catalogue, 5th revised edition (Hoffleit & Warren 1991), via
+  [CDS V/50](https://cdsarc.cds.unistra.fr/viz-bin/cat/V/50).
