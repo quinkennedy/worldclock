@@ -8,8 +8,8 @@ function julianCentury(utcMs) {
   return (jd - 2451545) / 36525;
 }
 
-// Returns { decl, eot, lat, lon }: declination and sub-solar lat/lon in degrees
-// (lon wrapped to ±180), equation of time in minutes.
+// Returns { decl, eot, lat, lon, lambda }: declination and sub-solar lat/lon in degrees
+// (lon wrapped to ±180), equation of time in minutes, apparent ecliptic longitude in degrees (0..360).
 export function sunPosition(utcMs) {
   const T = julianCentury(utcMs);
 
@@ -45,7 +45,7 @@ export function sunPosition(utcMs) {
   let lon = (720 - utcMinutes - eot) / 4;
   lon = ((((lon + 180) % 360) + 360) % 360) - 180;
 
-  return { decl, eot, lat: decl, lon };
+  return { decl, eot, lat: decl, lon, lambda: ((lambda % 360) + 360) % 360 };
 }
 
 // Unit vector towards the sun in Earth-fixed coordinates:
@@ -54,4 +54,20 @@ export function sunDirection(utcMs) {
   const { lat, lon } = sunPosition(utcMs);
   const la = lat * RAD, lo = lon * RAD;
   return [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)];
+}
+
+// UTC ms when the sun's apparent longitude reaches targetDeg in the given UTC year:
+// 0 March equinox, 90 June solstice, 180 September equinox, 270 December solstice.
+// Newton steps on the mean solar motion. Exact for this model, which puts it within ~10 min of
+// the published instants (the model's longitude is good to ~0.01°).
+export function solarLongitudeTime(year, targetDeg) {
+  const DAY = 86400000;
+  const YEAR_DAYS = 365.2422;
+  let t = Date.UTC(year, 2, 20) + (targetDeg / 360) * YEAR_DAYS * DAY;
+  for (let i = 0; i < 8; i++) {
+    const diff = ((((targetDeg - sunPosition(t).lambda) % 360) + 540) % 360) - 180;
+    t += (diff / 360) * YEAR_DAYS * DAY;
+    if (Math.abs(diff) < 1e-6) break;
+  }
+  return t;
 }

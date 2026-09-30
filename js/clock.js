@@ -1,19 +1,28 @@
 // The sim clock: the ONLY source of time. Everything astronomical reads simNow().
 //
-// Real elapsed time is measured with Date.now() rather than performance.now():
-// over weeks unattended, performance.now() can pause during system sleep and drift
-// from the wall clock, and at x1 the piece must stay true to the real time.
+// Real time is the wall clock (Date.now()): over weeks unattended, performance.now() can pause
+// during system sleep and drift from it, and at x1 the piece must stay true to the real time.
+// But Date.now() only has 1 ms steps, and at x100000 one ms is 100 s of sim time, which makes
+// fast playback stutter. So realNow() follows performance.now() for smoothness and snaps back to
+// Date.now() whenever the two drift more than RESYNC_MS apart (e.g. after the system sleeps).
+
+const RESYNC_MS = 50;
 
 const listeners = new Set();
 
-let anchorSim = Date.now();
+let perfBase = Date.now() - performance.now();
+
+function realNow() {
+  const p = performance.now();
+  const wall = Date.now();
+  if (Math.abs(perfBase + p - wall) > RESYNC_MS) perfBase = wall - p;
+  return perfBase + p;
+}
+
+let anchorSim = realNow();
 let anchorReal = anchorSim;
 let speed = 1;
 let paused = false;
-
-function realNow() {
-  return Date.now();
-}
 
 function reanchor() {
   anchorSim = simNow();
@@ -67,10 +76,23 @@ export function onChange(fn) {
   return () => listeners.delete(fn);
 }
 
+// Parses an ISO date/time as UTC; returns NaN if it can't. Date.parse reads a date-time with no
+// zone as local time, so a missing zone gets 'Z' (date-only strings are already UTC).
+export function parseUtc(text) {
+  const s = String(text).trim();
+  const hasZone = /(Z|[+-]\d{2}(:?\d{2})?)$/i.test(s);
+  return Date.parse(s.includes('T') && !hasZone ? s + 'Z' : s);
+}
+
+// UTC ISO string without milliseconds, e.g. 2026-03-20T12:00:00Z.
+export function formatUtc(utcMs) {
+  return new Date(utcMs).toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
 // ?t=<ISO> starts paused at that time, but only with ?gui. The public page ignores it.
 export function initFromUrl(params) {
   if (!params.has('gui') || !params.has('t')) return;
-  const t = Date.parse(params.get('t'));
+  const t = parseUtc(params.get('t'));
   if (Number.isNaN(t)) {
     console.warn('clock: ignoring unparseable ?t=', params.get('t'));
     return;

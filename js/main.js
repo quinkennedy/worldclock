@@ -19,7 +19,8 @@ const state = {
   vao: null,
   landTex: null,
   lost: false,
-  guiVisible: false, // set by spec 07's panel
+  gui: null,         // spec 07's panel, only with ?gui
+  guiVisible: false,
 };
 
 async function fetchText(url) {
@@ -116,6 +117,7 @@ function schedule() {
 function frame() {
   timer = raf = 0;
   draw();
+  if (state.guiVisible) state.gui.tick();
   schedule();
 }
 
@@ -161,6 +163,21 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// --- dev GUI (spec 07) -------------------------------------------------------
+// Imported only with ?gui, so the public page never fetches Tweakpane.
+
+async function loadGui() {
+  const { createGui } = await import('./gui.js');
+  state.gui = createGui({
+    config: state.config,
+    requestRedraw,
+    onVisibility(visible) {
+      state.guiVisible = visible;
+      requestRedraw(); // switches between the live 5 s cadence and every frame
+    },
+  });
+}
+
 // --- start ------------------------------------------------------------------
 
 async function start() {
@@ -182,6 +199,8 @@ async function start() {
   }
   requestWakeLock();
   requestRedraw();
+
+  if (params.has('gui')) loadGui().catch((err) => console.error('dev GUI failed to load:', err));
 }
 
 start().catch((err) => console.error('world clock failed to start:', err));

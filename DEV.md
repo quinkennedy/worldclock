@@ -25,8 +25,23 @@ The plain page runs in real time and has no controls. Add `?gui` for developer o
 | `/?gui&t=2026-06-21T12:00Z`           | June solstice, paused: the Arctic is fully lit and Antarctica fully dark. |
 | `/?t=2026-06-21T12:00Z`               | `?t=` without `?gui` is ignored, so this shows live time. |
 
-`?t=` takes any ISO date/time in UTC. With `?gui`, the `g` key will show or hide the dev panel
-once it's built (spec 07). Without `?gui`, no key does anything.
+`?t=` takes any ISO date/time, read as UTC when it has no zone. With `?gui`, the `g` key shows or
+hides the dev panel. Without `?gui`, no key does anything and Tweakpane is never downloaded.
+
+## Dev panel (`?gui`)
+
+- **Time:** the current sim time (UTC); a log speed slider from x1 to x100000 with a +/− direction;
+  a UTC text field (type a date/time, press Enter to jump there); Pause/Play; **Now** returns to live
+  time at x1.
+- **Presets:** the equinoxes and solstices of the sim time's UTC year, and the next full or new moon
+  after the sim time (press again to step to the one after). A preset resets the speed to +x1
+  and keeps the pause state.
+- **Design:** one folder per spec. Edits redraw at once. **Copy config** puts the values on the
+  clipboard as JSON, **Download config** saves `config.json`, and **Reset** goes back to the values
+  loaded at startup. Nothing is saved between reloads.
+
+While the panel is visible, or the clock isn't at live x1, the map redraws every frame.
+Hide the panel and press **Now** to see the public page's 5 s cadence.
 
 ## Long-run test
 
@@ -55,8 +70,9 @@ Record the date, machine, browser and results below.
 
 ## Changing the look
 
-Design values (colours, the twilight's lux range and so on) live in `config.json`. Edit it and reload.
-The dev panel will be able to download a new `config.json`. Commit that file to change the public page.
+Design values (colours, the twilight's lux range and so on) live in `config.json`. Edit it and reload,
+or tune them live in the dev panel (`?gui`), press **Download config** and replace the repo's `config.json`
+with the download. Commit that file to change the public page. The twilight's lux range is config-only.
 
 ## Regenerating data
 

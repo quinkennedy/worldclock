@@ -6,7 +6,7 @@ night: no text, numbers or UI. It's hosted as a static GitHub Pages site and run
 
 ## Specs (source of truth)
 `specs/00-vision.md` holds the goal and locked decisions. Each `specs/0N-*.md` is a small, standalone spec.
-**Currently building v1: `specs/07-dev-gui.md`** (`specs/01-sun-terminator.md` is done). Don't start other specs unless asked.
+**v1 is built: `specs/01-sun-terminator.md` and `specs/07-dev-gui.md` are done** (long-run test pending). The next spec isn't chosen yet, so ask. Don't start other specs unless asked.
 Every spec that touches `js/` or `shaders/` needs the long-run test in `DEV.md` before it's considered shipped.
 If a decision isn't in a spec, ask; don't invent it. Record new decisions in `00-vision.md`.
 
@@ -22,6 +22,7 @@ js/clock.js         sim clock: the ONLY source of time (speed, pause, set; ?t= o
 js/config.js        loads config.json, with built-in fallback defaults
 js/gui.js           Tweakpane dev panel, dynamically imported only with ?gui
 js/sun.js           NOAA solar position (pure functions, UTC ms in)
+js/moon.js          lunar phases for the GUI presets (Meeus); spec 06 adds the sub-lunar point
 js/gl.js            WebGL setup, full-screen quad
 shaders/            fragment shaders (lighting, twilight, later halftone/stars/moon)
 data/               committed shader-ready textures (land mask, later elevation, land cover, stars)

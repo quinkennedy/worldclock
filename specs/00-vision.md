@@ -23,6 +23,8 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | Aspect     | Wider than 2:1: crop the poles. 2:1 down to 16:10: stretch vertically to fill. Narrower than 16:10: stretch to 16:10, letterbox the rest. |
 | Text       | None on the canvas: no labels, numbers, scale or caption |
 | Dev GUI    | Tweakpane, loaded only with `?gui`; `g` toggles; x1 to x100000, reversible; `?t=` works only with `?gui` |
+| Presets    | Equinoxes and solstices of the sim time's UTC year, at the instant this piece's solar model gives (within ~10 min of published times). Full/new moon: the next one strictly after the sim time (Meeus ch. 49), so repeated presses step forward. Presets reset the speed to +x1 and keep the pause state |
+| Sim clock  | Real time is the wall clock (`Date.now()`), followed at sub-ms resolution via `performance.now()` and re-synced when they drift > 50 ms apart, so fast playback doesn't stutter. Zone-less `?t=`/panel times are UTC |
 | Config     | Tunables in `config.json`; GUI copies or downloads it; commit the file to change defaults |
 | Motion     | Real time on the public page; speed, set time, pause and presets in the dev GUI |
 | Day side   | Light "paper", CMYK Ben-Day overprint by land cover |
@@ -44,4 +46,4 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | 04 | Relief lit by the sun      | later   | 01, 02     |
 | 05 | Night sky: zenith stars    | later   | 01         |
 | 06 | Moon                       | later   | 01         |
-| 07 | Dev GUI & time control     | **v1, next** | 01 (clock.js) |
+| 07 | Dev GUI & time control     | **done** (long-run test pending, see `DEV.md`) | 01 (clock.js) |

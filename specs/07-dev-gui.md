@@ -1,5 +1,7 @@
 # 07 — Dev GUI & time control
 
+**Status: done.** Outstanding: the long-run test in `DEV.md` (the clock and render loop changed).
+
 ## Outcome
 A developer-only Tweakpane panel for exploring design variables and scrubbing time.
 The public page (without `?gui`) never loads it and always runs in real time.
