@@ -50,3 +50,10 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | 06 | Moon                       | later   | 01         |
 | 07 | Dev GUI & time control     | **done** (long-run test pending, see `DEV.md`) | 01 (clock.js) |
 | 08 | Anti-solar sky             | idea    | 05         |
+| 09 | Ben-Day dot design iteration | idea, prototype first | (03) |
+| 10 | Reaction-diffusion water   | idea, prototype first | (02, 09) |
+| 11 | Orange-peel projection     | idea, prototype first | 01 |
+| 12 | Globe views                | idea, prototype first | 01 (06 for moon views) |
+
+Specs 09–12 are design prototypes built outside `index.html`. Before any of them starts, interview Quin for the real
+goal, split it into small sub-specs if needed, and have Quin explicitly confirm each key decision (see each spec).
