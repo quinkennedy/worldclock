@@ -59,6 +59,9 @@ stage changes; its number never changes. `ready` means every key decision has be
 | 09 | Ben-Day dot design iteration | idea (prototype first) | (03) |
 | 10 | Reaction-diffusion water   | defined (umbrella: living ocean texture) | (02, 09) |
 | 10a | RD + fake flow prototype (`proto/10-rd-water/`) | **done** (prototype; tuning on the real display pending) | 02 |
+| 10b | RD colour layers (one sim per channel; RGB/CMYK/HSL) | defined (prototype built ahead of spec) | 10a |
+| 10c | RD as specular highlights | **done** (prototype; tuning on the real display pending) | 10a, 01 (06 moon; 14 model) |
+| 10d | RD warm-up and fade-in (hide startup artifacts) | **done** (prototype) | 10a |
 | 11 | Orange-peel projection     | idea (prototype first) | 01 |
 | 12 | Globe views                | idea (prototype first) | 01 (06 for moon views) |
 | 13 | Spec stage colours in VS Code (dev tooling) | idea | — |

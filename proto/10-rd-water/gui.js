@@ -1,5 +1,7 @@
 // Spec 10a panel. Always visible; `g` hides it. Every edit applies on the next frame.
 import { Pane } from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
+import { hexToRgb } from '../../js/config.js';
+import * as clock from '../../js/clock.js';
 
 // Gray-Scott feed/kill for Du 0.2097, Dv 0.105, dt 1 (checked on the CPU; all form patterns).
 const GS_PRESETS = {
@@ -12,6 +14,41 @@ const GS_PRESETS = {
 };
 
 const opts = (...names) => Object.fromEntries(names.map((n) => [n, n]));
+
+const round = (x) => Math.round(x * 10) / 10;
+
+function rgbToHsl([r, g, b]) {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const c = max - min;
+  let h = 0;
+  if (c > 0) {
+    if (max === r) h = ((g - b) / c + 6) % 6;
+    else if (max === g) h = (b - r) / c + 2;
+    else h = (r - g) / c + 4;
+  }
+  const s = c === 0 ? 0 : c / (1 - Math.abs(2 * l - 1));
+  return { h: round(h * 60), s: round(s * 100), l: round(l * 100) };
+}
+
+// Layers whose base colour (every d = 0) is the water colour, for a palette's water hex.
+// RGB: pure primaries at S 100, where L = 50 × channel. CMYK: standard ink split; an ink of
+// amount a is its pure hue at L = 100 − 50a, and K is a grey at L = 100 × (1 − k).
+export function waterLayers(water) {
+  const rgb = hexToRgb(water);
+  const k = 1 - Math.max(...rgb);
+  const inks = rgb.map((v) => (k < 1 ? (1 - v - k) / (1 - k) : 0));
+  return {
+    rgb: [0, 120, 240].map((h, i) => ({ h, s: 100, l: round(50 * rgb[i]) })),
+    cmyk: [...[180, 300, 60].map((h, i) => ({ h, s: 100, l: round(100 - 50 * inks[i]) })),
+      { h: 0, s: 0, l: round(100 * (1 - k)) }],
+    hsl: rgbToHsl(rgb),
+  };
+}
+
+// A palette with no layers in settings.json uses waterLayers() of its water colour instead.
+const hasLayers = (p) => Boolean(p.rgb && p.cmyk && p.hsl);
 
 function assignDeep(to, from) {
   for (const [k, v] of Object.entries(from)) {
@@ -31,6 +68,27 @@ export function createGui(ctx) {
   const pane = new Pane({ title: '10a · RD water' });
   Object.assign(pane.element.parentElement.style, { maxHeight: 'calc(100vh - 16px)', overflowY: 'auto' });
 
+  // --- Time (10c): the sim clock that places the sun and moon. The RD itself runs by steps.
+  const time = pane.addFolder({ title: 'Time' });
+  const t = { speedExp: 0, sign: 1, set: clock.formatUtc(clock.simNow()) };
+  time.addBinding(stats, 'utc', { label: 'sim UTC', readonly: true, interval: 500 });
+  const setSpeed = () => clock.setSpeed(t.sign * 10 ** t.speedExp);
+  time.addBinding(t, 'speedExp', { label: 'speed', min: 0, max: 5, step: 0.01,
+    format: (v) => 'x' + Math.round(10 ** v).toLocaleString('en-US') }).on('change', setSpeed);
+  time.addBinding(t, 'sign', { label: 'direction', options: { '+': 1, '−': -1 } }).on('change', setSpeed);
+  time.addBinding(t, 'set', { label: 'set UTC' }).on('change', ({ value }) => {
+    const ms = clock.parseUtc(value);
+    if (!Number.isNaN(ms)) clock.setTime(ms);
+  });
+  const clockPause = time.addButton({ title: 'Pause' });
+  clockPause.on('click', () => clock.setPaused(!clock.isPaused()));
+  time.addButton({ title: 'Now' }).on('click', () => {
+    clock.resetToNow();
+    Object.assign(t, { speedExp: 0, sign: 1 });
+    pane.refresh();
+  });
+  clock.onChange(() => { clockPause.title = clock.isPaused() ? 'Play' : 'Pause'; });
+
   // --- Sim
   const sim = pane.addFolder({ title: 'Sim' });
   sim.addBinding(stats, 'grid', { readonly: true, interval: 500 });
@@ -46,6 +104,10 @@ export function createGui(ctx) {
   const pauseBtn = sim.addButton({ title: 'Pause' });
   pauseBtn.on('click', () => { ctx.togglePause(); pauseBtn.title = ctx.paused ? 'Play' : 'Pause'; });
   sim.addButton({ title: 'Reseed' }).on('click', () => ctx.reseed());
+  // Spec 10d: after a seed, hide the pattern for warm-up steps, then fade it in.
+  sim.addBinding(settings.sim, 'warmupSteps', { label: 'warm-up steps', min: 0, max: 5000, step: 1 });
+  sim.addBinding(settings.sim, 'fadeSeconds', { label: 'fade seconds', min: 0, max: 30, step: 0.1 });
+  sim.addBinding(stats, 'reveal', { readonly: true, format: (v) => v.toFixed(2), interval: 100 });
   sim.addButton({ title: 'Clear' }).on('click', () => ctx.clear());
 
   // --- Model
@@ -123,6 +185,58 @@ export function createGui(ctx) {
   disp.addBinding(settings.display, 'invert');
   disp.addBinding(settings.display, 'land');
 
+  // --- Colour: one RD layer per channel, each with its own seed
+  const c = settings.color;
+  const colF = pane.addFolder({ title: 'Colour layers' });
+  colF.addBinding(c, 'mode', { options: { 'grey (1 sim)': 'grey', 'RGB add (3)': 'rgb', 'CMYK multiply (4)': 'cmyk', 'HSL (3)': 'hsl', 'specular (1)': 'specular' } });
+  const palette = colF.addBinding(c, 'palette', { options: opts('sunny', 'night', 'split') });
+  const rangeH = colF.addBinding(c.range, 'h', { label: '± hue °', min: 0, max: 180, step: 1 });
+  const rangeS = colF.addBinding(c.range, 's', { label: '± sat', min: 0, max: 50, step: 0.5 });
+  const rangeL = colF.addBinding(c.range, 'l', { label: '± light', min: 0, max: 50, step: 0.5 });
+  const hslRows = (f, o, label) => {
+    f.addBlade({ view: 'separator' });
+    f.addBinding(o, 'h', { label: `${label} H`, min: 0, max: 360, step: 1 });
+    f.addBinding(o, 's', { label: `${label} S`, min: 0, max: 100, step: 0.5 });
+    f.addBinding(o, 'l', { label: `${label} L`, min: 0, max: 100, step: 0.5 });
+  };
+  const palF = { rgb: [], cmyk: [], hsl: [] };
+  const palettes = [];
+  for (const name of ['sunny', 'night']) {
+    const p = c[name];
+    const f = colF.addFolder({ title: name, expanded: false });
+    const water = f.addBinding(p, 'water');
+    f.addBinding(p, 'land');
+    if (!hasLayers(p)) {
+      palettes.push(f);
+      continue;
+    }
+    water.on('change', () => { assignDeep(p, waterLayers(p.water)); pane.refresh(); });
+    const rgbF = f.addFolder({ title: 'RGB layers' });
+    p.rgb.forEach((o, i) => hslRows(rgbF, o, 'RGB'[i]));
+    const cmykF = f.addFolder({ title: 'CMYK layers' });
+    p.cmyk.forEach((o, i) => hslRows(cmykF, o, 'CMYK'[i]));
+    const hslF = f.addFolder({ title: 'HSL base' });
+    hslRows(hslF, p.hsl, 'base');
+    palF.rgb.push(rgbF);
+    palF.cmyk.push(cmykF);
+    palF.hsl.push(hslF);
+    palettes.push(f);
+  }
+  // Specular only: the moonlit target between night and sunny (no layers).
+  const moonF = colF.addFolder({ title: 'moon', expanded: false });
+  moonF.addBinding(c.moon, 'water');
+  moonF.addBinding(c.moon, 'land');
+
+  // --- Specular (10c): layer 0 as wave height, glinting under the real sun and moon
+  const sp = settings.specular;
+  const specF = pane.addFolder({ title: 'Specular' });
+  specF.addBinding(sp, 'normalStrength', { label: 'normal strength', min: 0, max: 50, step: 0.1 });
+  specF.addBinding(sp, 'exponent', { min: 1, max: 2000, step: 1 });
+  specF.addBinding(sp, 'strength', { min: 0, max: 4, step: 0.01 });
+  specF.addBinding(sp, 'moonGlint', { label: 'moon glint' });
+  specF.addBinding(sp, 'moonLighting', { label: 'moon lighting' });
+  specF.addBinding(settings.twilight, 'moonLux', { label: 'moon stop lux', min: 0.005, max: 5 });
+
   // --- Settings file
   const file = pane.addFolder({ title: 'Settings' });
   file.addButton({ title: 'Copy settings' }).on('click', () => navigator.clipboard.writeText(json(settings)));
@@ -144,6 +258,12 @@ export function createGui(ctx) {
     fhnF.hidden = settings.model !== 'fitzHughNagumo';
     brF.hidden = settings.model !== 'brusselator';
     noiseScale.hidden = noiseSeed.hidden = pm.source !== 'noise';
+    const coloured = c.mode !== 'grey' && c.mode !== 'specular';
+    rangeH.hidden = rangeS.hidden = c.mode !== 'hsl';
+    rangeL.hidden = palette.hidden = !coloured;
+    palettes.forEach((f) => { f.hidden = c.mode === 'grey'; });
+    specF.hidden = moonF.hidden = c.mode !== 'specular';
+    for (const [mode, folders] of Object.entries(palF)) folders.forEach((f) => { f.hidden = c.mode !== mode; });
   }
   pane.on('change', relayout);
   relayout();

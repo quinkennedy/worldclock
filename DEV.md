@@ -80,7 +80,7 @@ Prototypes never change `config.json` or the public page.
 
 | URL                    | Spec | What it's for |
 |------------------------|------|---------------|
-| `/proto/10-rd-water/`  | 10a  | Reaction-diffusion on the oceans (Gray-Scott, FitzHugh-Nagumo, Brusselator), carried by a curl-noise flow. Map or screen simulation, a parameter map (latitude, depth, noise) blending two parameter sets, raw greyscale view. |
+| `/proto/10-rd-water/`  | 10a  | Reaction-diffusion on the oceans (Gray-Scott, FitzHugh-Nagumo, Brusselator), carried by a curl-noise flow. Map or screen simulation, a parameter map (latitude, depth, noise) blending two parameter sets, raw greyscale view. **Colour layers** (exploration): one independent sim per channel, each with its own seed, combined as RGB (add), CMYK (multiply) or HSL (sims drive H, S, L); sunny, night or split (sunny west of 0°, night east) palettes (10b). **Specular** mode (10c): one sim as wave height, glinting under the real sun and moon, with a Time folder (speed, set UTC, pause, now). Water and land blend night → moon → sunny by light level; **moon glint** and **moon lighting** toggle the moon's glint and its light on the globe separately. After a load, reseed or grid rebuild the pattern stays hidden for **warm-up steps**, then fades in over **fade seconds** (10d). |
 
 ## Changing the look
 

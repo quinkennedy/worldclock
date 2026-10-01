@@ -2,12 +2,18 @@
 // everything tunable is in settings.json and the panel.
 import { getContext, createProgram, createQuad, drawQuad, createMapTexture } from '../../js/gl.js';
 import { hexToRgb } from '../../js/config.js';
-import { createGui } from './gui.js';
+import * as clock from '../../js/clock.js';
+import { sunDirection } from '../../js/sun.js';
+import { moonPosition } from '../../js/moon.js';
+import { createGui, waterLayers } from './gui.js';
 
 const FLOW_SIZE = [512, 256];
 const PARAM_SIZE = [1024, 512];
 const MODELS = { grayScott: 0, fitzHughNagumo: 1, brusselator: 2 };
 const SOURCES = { uniform: 0, latitude: 1, depth: 2, noise: 3 };
+// Colour modes: how many independent sims (layers) each runs, and its display id.
+const COLOR_MODES = { grey: [1, 0], rgb: [3, 1], cmyk: [4, 2], hsl: [3, 3], specular: [1, 4] };
+const PALETTES = { sunny: 0, night: 1, split: 2 };
 
 const canvas = document.getElementById('map');
 
@@ -23,12 +29,14 @@ const state = {
   elevTex: null,
   flow: null,      // { tex, fbo }
   param: null,     // { tex, fbo }
-  grid: null,      // { w, h, vRange, precision, key, tex: [a, b], fbo: [a, b], read }
+  grid: null,      // { w, h, vRange, precision, key, layers: [{ targets: [a, b], read }] }
   paramKey: '',
   flowTime: 0,
   steps: 0,
   paused: false,
-  stats: { grid: '', precision: '', fps: 0, steps: 0 },
+  stats: { grid: '', precision: '', fps: 0, steps: 0, reveal: 1, utc: '' },
+  warmup: false,  // spec 10d: hide the pattern after a seed, then fade it in
+  fadeStart: 0,
 };
 
 // --- loading ------------------------------------------------------------------
@@ -141,22 +149,23 @@ function gridSpec() {
     h = w / 2;
     vRange = [0, 1];
   }
-  return { w, h, vRange, precision, key: `${w}x${h}:${vRange}:${precision}:${state.settings.model}` };
+  const layers = COLOR_MODES[state.settings.color.mode][0];
+  return { w, h, vRange, precision, layers, key: `${w}x${h}:${vRange}:${precision}:${state.settings.model}:${layers}` };
 }
 
-// Rebuilds the ping-pong pair when the grid changes, and reseeds.
+// Rebuilds the ping-pong pairs (one per colour layer) when the grid changes, and reseeds.
 function ensureGrid() {
   const gl = state.gl;
   const spec = gridSpec();
   if (state.grid && state.grid.key === spec.key) return;
-  if (state.grid) state.grid.targets.forEach((t) => freeTarget(gl, t));
+  if (state.grid) state.grid.layers.forEach((l) => l.targets.forEach((t) => freeTarget(gl, t)));
   const half = spec.precision === 'half';
   const make = () => target(gl, spec.w, spec.h, half ? gl.RGBA16F : gl.RGBA32F, gl.RGBA,
     half ? gl.HALF_FLOAT : gl.FLOAT, gl.LINEAR, gl.REPEAT);
-  const targets = [make(), make()];
-  if (!targets[0].ok) console.error(`sim: ${spec.precision} render target incomplete`);
-  state.grid = { ...spec, targets, read: 0 };
-  state.stats.grid = `${spec.w} × ${spec.h}`;
+  const layers = Array.from({ length: spec.layers }, () => ({ targets: [make(), make()], read: 0 }));
+  if (!layers[0].targets[0].ok) console.error(`sim: ${spec.precision} render target incomplete`);
+  state.grid = { ...spec, layers };
+  state.stats.grid = `${spec.w} × ${spec.h}${spec.layers > 1 ? ` × ${spec.layers}` : ''}`;
   state.stats.precision = spec.precision;
   seed(false);
 }
@@ -196,7 +205,7 @@ function seed(clear) {
   const gl = state.gl;
   const g = state.grid;
   const s = state.settings;
-  for (const t of g.targets) {
+  for (const t of g.layers.flatMap((l) => l.targets)) {
     const u = pass(state.progs.seed, t);
     gl.uniform2f(u.uGrid, g.w, g.h);
     gl.uniform2f(u.uVRange, ...g.vRange);
@@ -209,6 +218,19 @@ function seed(clear) {
     drawQuad(gl, state.vao);
   }
   state.steps = 0;
+  state.warmup = !clear;
+  state.fadeStart = 0;
+}
+
+// Spec 10d: 0 until warmupSteps have run since the seed, then 0 → 1 over fadeSeconds of frame time.
+function reveal(now) {
+  if (!state.warmup) return 1;
+  const sim = state.settings.sim;
+  if (state.steps < sim.warmupSteps) return 0;
+  if (!state.fadeStart) state.fadeStart = now;
+  const r = sim.fadeSeconds > 0 ? (now - state.fadeStart) / (sim.fadeSeconds * 1000) : 1;
+  if (r >= 1) state.warmup = false;
+  return Math.min(r, 1);
 }
 
 // --- passes -------------------------------------------------------------------
@@ -264,13 +286,15 @@ function step(n) {
   gl.viewport(0, 0, g.w, g.h);
   gl.activeTexture(gl.TEXTURE0);
   gl.uniform1i(u.uState, 0);
-  for (let i = 0; i < n; i++) {
-    const src = g.targets[g.read];
-    const dst = g.targets[1 - g.read];
-    gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fbo);
-    gl.bindTexture(gl.TEXTURE_2D, src.tex);
-    drawQuad(gl, state.vao);
-    g.read = 1 - g.read;
+  for (const l of g.layers) {
+    for (let i = 0; i < n; i++) {
+      const src = l.targets[l.read];
+      const dst = l.targets[1 - l.read];
+      gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fbo);
+      gl.bindTexture(gl.TEXTURE_2D, src.tex);
+      drawQuad(gl, state.vao);
+      l.read = 1 - l.read;
+    }
   }
   state.steps += n;
 }
@@ -279,11 +303,52 @@ function display() {
   const gl = state.gl;
   const s = state.settings;
   const view = s[s.model].view;
+  const c = s.color;
   const u = pass(state.progs.display, null);
   gl.uniform2f(u.uResolution, canvas.width, canvas.height);
   gl.uniform1f(u.uMinAspect, s.layout.minAspect);
-  bindTex(0, state.grid.targets[state.grid.read].tex, u.uState);
-  bindTex(1, state.landTex, u.uLand);
+  const layers = state.grid.layers;
+  for (let i = 0; i < 4; i++) {
+    const l = layers[Math.min(i, layers.length - 1)];
+    bindTex(1 + i, l.targets[l.read].tex, u[`uState${i}`]);
+  }
+  bindTex(0, state.landTex, u.uLand);
+  gl.uniform1i(u.uMode, COLOR_MODES[c.mode][1]);
+  gl.uniform1f(u.uReveal, state.stats.reveal);
+  gl.uniform1i(u.uPalette, PALETTES[c.palette]);
+  gl.uniform3f(u.uRange, c.range.h, c.range.s, c.range.l);
+  for (const [i, name] of ['sunny', 'night'].entries()) {
+    const p = c[name];
+    const layers = p.rgb && p.cmyk && p.hsl ? p : waterLayers(p.water);
+    const hsl = (a) => a.flatMap((x) => [x.h, x.s, x.l]);
+    gl.uniform3fv(u[`uRgb${i}[0]`], hsl(layers.rgb));
+    gl.uniform3fv(u[`uCmyk${i}[0]`], hsl(layers.cmyk));
+    gl.uniform3f(u[`uHsl${i}`], layers.hsl.h, layers.hsl.s, layers.hsl.l);
+    gl.uniform3fv(u[`uLand${i}`], hexToRgb(p.land));
+    gl.uniform3fv(u[`uWater${i}`], hexToRgb(p.water));
+  }
+  gl.uniform3fv(u.uLand2, hexToRgb(c.moon.land));
+  gl.uniform3fv(u.uWater2, hexToRgb(c.moon.water));
+
+  // Spec 10c: the real sun and moon at the sim time.
+  const now = clock.simNow();
+  const sunDir = sunDirection(now);
+  const moon = moonPosition(now, sunDir);
+  const sp = s.specular;
+  gl.uniform3fv(u.uSunDir, sunDir);
+  gl.uniform3fv(u.uMoonDir, moon.dir);
+  gl.uniform1i(u.uMoonGlint, sp.moonGlint ? 1 : 0);
+  gl.uniform1i(u.uMoonLighting, sp.moonLighting ? 1 : 0);
+  gl.uniform1f(u.uMoonPhase, moon.phaseAngle);
+  gl.uniform1f(u.uMoonDist, moon.distKm);
+  gl.uniform1f(u.uLatCorrection, s.sim.space === 'map' ? s.sim.latCorrection : 0);
+  gl.uniform1f(u.uNormalStrength, sp.normalStrength);
+  gl.uniform1f(u.uExponent, sp.exponent);
+  gl.uniform1f(u.uStrength, sp.strength);
+  gl.uniform1f(u.uNightLux, s.twilight.nightLux);
+  gl.uniform1f(u.uDayLux, s.twilight.dayLux);
+  gl.uniform1f(u.uMoonStopLux, s.twilight.moonLux);
+  state.stats.utc = clock.formatUtc(now);
   gl.uniform2f(u.uVRange, ...state.grid.vRange);
   gl.uniform1i(u.uChannel, view.channel === 'u' ? 0 : 1);
   gl.uniform1f(u.uLo, view.lo);
@@ -313,6 +378,7 @@ function frame(now) {
     updateFlow();
     step(n);
   }
+  state.stats.reveal = reveal(now);
   display();
   state.stats.steps = state.steps;
   raf = requestAnimationFrame(frame);

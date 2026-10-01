@@ -5,7 +5,9 @@
     "screenScale": 3,
     "latCorrection": 0,
     "stepsPerFrame": 1,
-    "precision": "auto"
+    "precision": "auto",
+    "warmupSteps": 100,
+    "fadeSeconds": 5
   },
   "model": "grayScott",
   "grayScott": {
@@ -82,6 +84,39 @@
     "invert": false,
     "land": "#6b6b6b",
     "letterbox": "#000000"
+  },
+  "color": {
+    "mode": "specular",
+    "palette": "split",
+    "range": {
+      "h": 20,
+      "s": 15,
+      "l": 3.5
+    },
+    "sunny": {
+      "water": "#b5aa91",
+      "land": "#b5aa88"
+    },
+    "night": {
+      "water": "#08080c",
+      "land": "#05050b"
+    },
+    "moon": {
+      "water": "#0e1722",
+      "land": "#151820"
+    }
+  },
+  "specular": {
+    "normalStrength": 8,
+    "exponent": 200,
+    "strength": 0.15,
+    "moonGlint": true,
+    "moonLighting": true
+  },
+  "twilight": {
+    "nightLux": 0.001,
+    "dayLux": 100000,
+    "moonLux": 0.25
   },
   "layout": {
     "minAspect": 1.6

@@ -12,7 +12,8 @@ while the rest of the piece stays almost still. The drift speed is a free design
 |-----|----------|--------|
 | 10a | RD + fake flow prototype (`proto/10-rd-water/`) | done |
 | —   | Real ocean-current data steering the pattern | not written |
-| —   | Several RD systems, one per colour layer, combined | not written |
+| 10b | Several RD systems, one per colour layer, combined | defined (prototype built) |
+| 10c | Grey RD driving specular highlights under the real sun and moon | done (prototype) |
 | —   | RD drawn through a Ben-Day dot renderer (09 / 03) | not written |
 | —   | Long-run stability (health check, reseeding) | not written |
 | —   | Lighting: RD under the sun, twilight and night | not written |
