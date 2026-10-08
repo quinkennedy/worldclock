@@ -31,10 +31,11 @@ function configJson(config) {
   return JSON.stringify(config, null, 2) + '\n';
 }
 
-// config: the live config object that draw() reads (bound in place).
-// requestRedraw(): draw at once. onVisibility(visible): the panel was shown or hidden.
+// config: the live config object that draw() reads (bound in place); edits show on the next frame.
+// water: js/water.js's sim ({ stats, paused, reseed() }). fps: { value }, the measured frame rate.
+// onVisibility(visible): the panel was shown or hidden.
 // Returns { tick() }, to be called after each draw while the panel is visible.
-export function createGui({ config, requestRedraw, onVisibility }) {
+export function createGui({ config, water, fps, onVisibility }) {
   const initial = structuredClone(config);
   const pane = new Pane({ title: 'World Clock' });
   // Scroll rather than run off short screens.
@@ -98,14 +99,14 @@ export function createGui({ config, requestRedraw, onVisibility }) {
   const design = pane.addFolder({ title: 'Design' });
 
   const twilight = design.addFolder({ title: 'Twilight' });
-  for (const key of ['dayWater', 'dayLand', 'nightWater', 'nightLand', 'letterbox']) {
+  for (const key of ['dayWater', 'dayLand', 'moonWater', 'moonLand', 'nightWater', 'nightLand', 'letterbox']) {
     twilight.addBinding(config.palette, key, { view: 'color' });
   }
+  twilight.addBinding(config.moonlight, 'enabled', { label: 'moonlight' });
   twilight.addBinding(config.layout, 'minAspect', { min: 1, max: 2, step: 0.01 });
 
   const relief = design.addFolder({ title: 'Relief' });
   relief.addBinding(config.relief, 'landExaggeration', { label: 'land', min: 0, max: 100, step: 0.5 });
-  relief.addBinding(config.relief, 'seaExaggeration', { label: 'sea', min: 0, max: 100, step: 0.5 });
 
   const stars = design.addFolder({ title: 'Stars' });
   stars.addBinding(config.stars, 'magLimit', { label: 'faintest mag', min: 1, max: 8, step: 0.1 });
@@ -127,7 +128,57 @@ export function createGui({ config, requestRedraw, onVisibility }) {
   discs.addBinding(config.discs, 'moonFill', { label: 'moon fill' });
   discs.addBinding(config.discs, 'moonOutline', { label: 'moon outline' });
 
-  design.on('change', () => requestRedraw());
+  // Spec 10e: the reaction-diffusion water. Ranges follow the 10a prototype's panel.
+  const w = config.water;
+  const waterF = design.addFolder({ title: 'Water' });
+
+  const spec = waterF.addFolder({ title: 'Specular' });
+  spec.addBinding(w.specular, 'normalStrength', { label: 'normal strength', min: 0, max: 50, step: 0.1 });
+  spec.addBinding(w.specular, 'exponent', { min: 1, max: 2000, step: 1 });
+  spec.addBinding(w.specular, 'strength', { min: 0, max: 4, step: 0.01 });
+  spec.addBinding(w.specular, 'moonGlint', { label: 'moon glint' });
+
+  const gs = waterF.addFolder({ title: 'Gray-Scott', expanded: false });
+  gs.addBinding(w.grayScott, 'Du', { min: 0, max: 0.24, step: 0.0001 });
+  gs.addBinding(w.grayScott, 'Dv', { min: 0, max: 0.24, step: 0.0001 });
+  gs.addBinding(w.grayScott, 'dt', { min: 0, max: 4, step: 0.01 });
+  gs.addBinding(w.grayScott, 'seedDensity', { label: 'seed density', min: 0, max: 1, step: 0.01 });
+  for (const set of ['a', 'b']) {
+    gs.addBinding(w.grayScott[set], 'feed', { label: `feed ${set.toUpperCase()}`, min: 0, max: 0.1, step: 0.0001 });
+    gs.addBinding(w.grayScott[set], 'kill', { label: `kill ${set.toUpperCase()}`, min: 0, max: 0.08, step: 0.0001 });
+  }
+  gs.addBinding(w.grayScott.view, 'lo', { label: 'height lo', step: 0.01 });
+  gs.addBinding(w.grayScott.view, 'hi', { label: 'height hi', step: 0.01 });
+
+  const depth = waterF.addFolder({ title: 'Depth map (A → B)', expanded: false });
+  depth.addBinding(w.depthMap, 'lo', { min: 0, max: 1, step: 0.01 });
+  depth.addBinding(w.depthMap, 'hi', { min: 0, max: 1, step: 0.01 });
+  depth.addBinding(w.depthMap, 'invert');
+
+  const flow = waterF.addFolder({ title: 'Flow', expanded: false });
+  flow.addBinding(w.flow, 'strength', { label: 'cells/step', min: 0, max: 0.5, step: 0.001 });
+  flow.addBinding(w.flow, 'scale', { min: 0.5, max: 20, step: 0.1 });
+  flow.addBinding(w.flow, 'evolution', { label: 'evolve /1k steps', min: 0, max: 1, step: 0.001 });
+
+  const sim = waterF.addFolder({ title: 'Sim', expanded: false });
+  sim.addBinding(water.stats, 'grid', { readonly: true, interval: 500 });
+  sim.addBinding(water.stats, 'precision', { label: 'in use', readonly: true, interval: 500 });
+  sim.addBinding(fps, 'value', { label: 'fps', readonly: true, format: (v) => v.toFixed(0), interval: 500 });
+  sim.addBinding(water.stats, 'steps', { readonly: true, format: (v) => v.toFixed(0), interval: 500 });
+  sim.addBinding(water.stats, 'reveal', { readonly: true, format: (v) => v.toFixed(2), interval: 100 });
+  sim.addBinding(w.sim, 'mapWidth', { label: 'map width', options: { 1024: 1024, 2048: 2048, 4096: 4096 } });
+  sim.addBinding(w.sim, 'precision', { options: { half: 'half', float: 'float' } });
+  sim.addBinding(w.sim, 'stepsPerFrame', { label: 'steps/frame', min: 0, max: 16, step: 1 });
+  sim.addBinding(w.sim, 'warmupSteps', { label: 'warm-up steps', min: 0, max: 5000, step: 1 });
+  sim.addBinding(w.sim, 'fadeSeconds', { label: 'fade seconds', min: 0, max: 30, step: 0.1 });
+  sim.addBinding(w.sim, 'instantWarmup', { label: 'fast warm-up' });
+  sim.addBinding(w.sim, 'warmupStepsPerFrame', { label: 'warm-up steps/frame', min: 1, max: 5000, step: 1 });
+  const simPause = sim.addButton({ title: 'Pause' });
+  simPause.on('click', () => {
+    water.paused = !water.paused;
+    simPause.title = water.paused ? 'Play' : 'Pause';
+  });
+  sim.addButton({ title: 'Reseed' }).on('click', () => water.reseed());
 
   const copyBtn = design.addButton({ title: 'Copy config' });
   copyBtn.on('click', async () => {
@@ -155,7 +206,6 @@ export function createGui({ config, requestRedraw, onVisibility }) {
     syncing = true;
     pane.refresh();
     syncing = false;
-    requestRedraw();
   });
 
   // --- Clock -> panel -------------------------------------------------------

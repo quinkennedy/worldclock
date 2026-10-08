@@ -1,9 +1,11 @@
 {
   "palette": {
-    "dayWater": "#ece6d8",
-    "dayLand": "#dcd2bc",
-    "nightWater": "#070910",
-    "nightLand": "#000000",
+    "dayWater": "#b5aa91",
+    "dayLand": "#b5aa88",
+    "moonWater": "#0e1722",
+    "moonLand": "#151820",
+    "nightWater": "#08080c",
+    "nightLand": "#05050b",
     "letterbox": "#000000"
   },
   "layout": {
@@ -11,11 +13,14 @@
   },
   "twilight": {
     "nightLux": 0.001,
-    "dayLux": 100000
+    "dayLux": 100000,
+    "moonLux": 0.25
+  },
+  "moonlight": {
+    "enabled": true
   },
   "relief": {
-    "landExaggeration": 3,
-    "seaExaggeration": 0.5
+    "landExaggeration": 3
   },
   "stars": {
     "magLimit": 6,
@@ -36,5 +41,55 @@
     "moonAlpha": 0.5,
     "moonFill": true,
     "moonOutline": false
+  },
+  "render": {
+    "fps": 20
+  },
+  "water": {
+    "sim": {
+      "mapWidth": 4096,
+      "latCorrection": 0,
+      "precision": "half",
+      "stepsPerFrame": 1,
+      "warmupSteps": 1000,
+      "fadeSeconds": 10,
+      "instantWarmup": true,
+      "warmupStepsPerFrame": 100
+    },
+    "grayScott": {
+      "Du": 0.2097,
+      "Dv": 0.105,
+      "dt": 1,
+      "seedDensity": 0.15,
+      "a": {
+        "feed": 0.022,
+        "kill": 0.051
+      },
+      "b": {
+        "feed": 0.046,
+        "kill": 0.063
+      },
+      "view": {
+        "channel": "v",
+        "lo": 0,
+        "hi": 0.4
+      }
+    },
+    "depthMap": {
+      "lo": 0,
+      "hi": 1,
+      "invert": false
+    },
+    "flow": {
+      "strength": 0.054,
+      "scale": 4,
+      "evolution": 0.065
+    },
+    "specular": {
+      "normalStrength": 8,
+      "exponent": 200,
+      "strength": 0.15,
+      "moonGlint": true
+    }
   }
 }

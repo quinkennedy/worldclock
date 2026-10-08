@@ -15,7 +15,7 @@ night: no text, numbers or UI. It's hosted as a static GitHub Pages site and run
 
 When a spec changes stage, rename the file (`git mv`) and update its row in the `00-vision.md` spec map. The number
 never changes; refer to specs by number ("spec 05") in prose.
-Done: 01, 02, 04, 05, 06, 07, 10a, 10c, 10d (long-run test pending for 01, 04, 05, 06, 07; 10a, 10c and 10d are prototypes, no long-run test). 10b is defined (prototype built ahead of spec). The next spec isn't chosen yet, so ask. Don't
+Done: 01, 02, 04, 05, 06, 07, 10a, 10c, 10d, 10e (long-run test pending for 01, 04, 05, 06, 07, 10e; 10a, 10c and 10d are prototypes, no long-run test). 10b is defined (prototype built ahead of spec). The next spec isn't chosen yet, so ask. Don't
 start other specs unless asked.
 Every spec that touches `js/` or `shaders/` needs the long-run test in `DEV.md` before it's considered shipped.
 If a decision isn't in a spec, ask; don't invent it. Record new decisions in `00-vision.md`.
@@ -27,15 +27,16 @@ index.html          entry point, served as-is by GitHub Pages
 README.md           public-facing description of the piece
 DEV.md              human dev/tester guide (run with `npx serve .`, test URLs)
 config.json         all tunable design values (committed; the GUI downloads replacements)
-js/main.js          setup, render loop (5 s live / rAF otherwise), wake lock
+js/main.js          setup, render loop (one rAF chain capped at render.fps), wake lock
 js/clock.js         sim clock: the ONLY source of time (speed, pause, set; ?t= only with ?gui)
 js/config.js        loads config.json, with built-in fallback defaults
 js/gui.js           Tweakpane dev panel, dynamically imported only with ?gui
 js/sun.js           NOAA solar position (pure functions, UTC ms in)
 js/moon.js          lunar phases for the GUI presets (Meeus ch. 49); sub-lunar point and phase (ch. 47, spec 06)
 js/stars.js         GMST, precession to date, B-V colours for the zenith stars (spec 05)
+js/water.js         reaction-diffusion water sim on the oceans (spec 10e); steps per frame, not on the sim clock
 js/gl.js            WebGL setup, full-screen quad
-shaders/            shaders (lighting, stars, later halftone/moon); twilight.glsl is shared via #include
+shaders/            shaders (lighting, stars, discs, water-*.frag sim passes); twilight.glsl and noise.glsl are shared via #include
 data/               committed shader-ready textures (land mask, later elevation, land cover, stars)
 tools/              offline data-prep scripts (spec 02); never run by the site
 specs/              one spec per feature

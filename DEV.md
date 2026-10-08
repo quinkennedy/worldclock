@@ -20,11 +20,12 @@ The plain page runs in real time and has no controls. Add `?gui` for developer o
 
 | URL                                   | What you should see |
 |---------------------------------------|---------------------|
-| `/`                                   | The live day/night map, updated every 5 s. |
-| `/?gui&t=2026-03-20T12:00Z`           | March equinox, paused: the terminator is nearly vertical at about ±90° longitude. |
+| `/`                                   | The live day/night map at 20 fps. The water shows plain colours for about half a second (the warm-up, 100 steps per frame after the first frame), then its drifting pattern and sun glint fade in over 10 s. With **fast warm-up** off, the plain colours last ~50 s. |
+| `/?gui&t=2026-03-20T12:00Z`           | March equinox, paused: the terminator is nearly vertical at about ±90° longitude; after the warm-up, the sun glints on the water around 0°, 0°. |
 | `/?gui&t=2026-06-21T12:00Z`           | June solstice, paused: the Arctic is fully lit and Antarctica fully dark. |
 | `/?gui&t=2026-03-20T00:40Z`           | Just after sunrise over the Himalaya: east-facing slopes lit, west-facing slopes dark. |
 | `/?gui&t=2026-01-15T00:00Z`           | Orion's belt overhead in the mid-Atlantic, at about 1°S, 30°W. The constellation is mirror-imaged, as on a celestial globe. |
+| `/?gui&t=2026-10-26T04:13Z`           | Full moon: the night side under the moon (about 17°N, 69°W) takes the moon colours, with a faint moon glint on the water. Untick **moonlight** (Twilight) and it goes back to night colours, glint only. |
 | `/?gui&t=2026-10-18T00:00Z`           | The moon just under half lit (43.8%), lit side facing west, at about 25.6°S 97.3°W; the sun disc splits across ±180°. The panel's "moon" line shows the lit % and position. |
 | `/?t=2026-06-21T12:00Z`               | `?t=` without `?gui` is ignored, so this shows live time. |
 
@@ -43,8 +44,11 @@ hides the dev panel. Without `?gui`, no key does anything and Tweakpane is never
   clipboard as JSON, **Download config** saves `config.json`, and **Reset** goes back to the values
   loaded at startup. Nothing is saved between reloads.
 
-While the panel is visible, or the clock isn't at live x1, the map redraws every frame.
-Hide the panel and press **Now** to see the public page's 5 s cadence.
+- **Design → Water:** the reaction-diffusion water (spec 10e): specular look, Gray-Scott, depth map, flow and sim.
+  The sim runs on frames, not the clock, so the clock's pause and speed don't touch it; it has its own Pause and
+  **Reseed** (which runs the warm-up again). Its read-outs show the grid, fps, steps and reveal (0 while hidden).
+
+The page always draws at `render.fps` (20), with or without the panel.
 
 ## Long-run test
 
@@ -59,11 +63,17 @@ after any change to `js/` or `shaders/`, and before installing. Short headless c
 It passes if:
 
 - **Memory:** both figures stay roughly flat after the first hour, with no steady climb.
+- **Water:** at the end the oceans still show a drifting pattern with glints: it hasn't died out to plain colour,
+  filled up solid, frozen in place, or grown blotches or seams. Note the frame rate the machine holds (`?gui`, Water →
+  Sim → fps) and whether it runs hot or loud.
 - **Sleep:** the screen never sleeps, dims or shows a screensaver. The page holds a Screen Wake Lock, but only
   while its tab is visible, so the OS power settings still matter.
 - **Correct time:** at the end, the terminator matches the real time. Compare it with timeanddate.com's day/night map.
 - **Recovery:** after the display is turned off and on, the machine sleeps and wakes, or the monitor is unplugged and
-  replugged, the map comes back at the correct time within about 5 s and the wake lock returns.
+  replugged, the map comes back at the correct time and the wake lock returns. If the WebGL context was lost, the
+  water warms up again before the pattern returns.
+- **Warm-up frames:** on load (and after Reseed), the fast warm-up frames (100 steps each) take well under 2 s each,
+  and the page doesn't lose its WebGL context there. Note how long the warm-up lasts.
 
 Record the date, machine, browser and results below.
 

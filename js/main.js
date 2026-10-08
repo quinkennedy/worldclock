@@ -4,11 +4,12 @@ import { loadConfig, hexToRgb } from './config.js';
 import { sunDirection, sunPosition } from './sun.js';
 import { moonPosition } from './moon.js';
 import { skyMatrix, starVertices, STAR_STRIDE } from './stars.js';
+import { createWater } from './water.js';
 import {
   getContext, createProgram, createQuad, drawQuad, createMapTexture, createSlopeTexture, createStarBuffer,
 } from './gl.js';
 
-const LIVE_INTERVAL_MS = 5000; // at 4K the terminator moves ~1 px every 22 s
+const FRAME_SLACK_MS = 4; // a frame this early still counts, so a 60 Hz display holds 20 fps rather than 15
 
 const params = new URLSearchParams(location.search);
 clock.initFromUrl(params);
@@ -17,7 +18,7 @@ const canvas = document.getElementById('map');
 
 const state = {
   config: null,
-  sources: null,     // { vert, frag, slope, starVert, starFrag, discVert, discFrag, land, elevation, stars } kept so a lost context can be rebuilt
+  sources: null,     // shader sources, images and star vertices, kept so a lost context can be rebuilt
   gl: null,
   prog: null,
   vao: null,
@@ -26,6 +27,8 @@ const state = {
   starProg: null,    // spec 05: zenith stars
   starBuf: null,     // { vao, count }
   discProg: null,    // spec 06: sun and moon discs
+  water: null,       // spec 10e: the reaction-diffusion sim (js/water.js)
+  fps: { value: 0 }, // measured frame rate, for the panel
   lost: false,
   gui: null,         // spec 07's panel, only with ?gui
   guiVisible: false,
@@ -69,6 +72,9 @@ function initGL() {
   state.starProg = createProgram(gl, state.sources.starVert, state.sources.starFrag);
   state.starBuf = createStarBuffer(gl, state.sources.stars, STAR_STRIDE);
   state.discProg = createProgram(gl, state.sources.discVert, state.sources.discFrag);
+  const w = state.sources.water;
+  state.water = createWater(gl, { vert: state.sources.vert, ...w }, state.sources.elevation, state.landTex, state.vao,
+    state.config.water);
 }
 
 // --- sizing -----------------------------------------------------------------
@@ -91,35 +97,54 @@ const resizeObserver = new ResizeObserver(([entry]) => {
   devW = dev ? dev.inlineSize : 0;
   devH = dev ? dev.blockSize : 0;
   applySize();
-  requestRedraw();
 });
 
 // --- drawing ----------------------------------------------------------------
 
-function draw() {
-  const { gl, prog, config } = state;
-  if (!gl || state.lost) return;
+// frameMs: the browser's frame clock, which times the water's fade-in. Astronomy uses the sim clock.
+function draw(frameMs) {
+  const { gl, prog, config, water } = state;
   const u = prog.uniforms;
   const p = config.palette;
   const t = config.twilight;
   const r = config.relief;
+  const sp = config.water.specular;
+  const view = config.water.grayScott.view;
   const now = clock.simNow();
   const sunDir = sunDirection(now);
+  const moon = moonPosition(now, sunDir);
+
+  water.update(frameMs);
 
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.useProgram(prog.program);
   gl.uniform2f(u.uResolution, canvas.width, canvas.height);
   gl.uniform3fv(u.uSunDir, sunDir);
+  gl.uniform3fv(u.uMoonDir, moon.dir);
   gl.uniform3fv(u.uDayWater, hexToRgb(p.dayWater));
   gl.uniform3fv(u.uDayLand, hexToRgb(p.dayLand));
+  gl.uniform3fv(u.uMoonWater, hexToRgb(p.moonWater));
+  gl.uniform3fv(u.uMoonLand, hexToRgb(p.moonLand));
   gl.uniform3fv(u.uNightWater, hexToRgb(p.nightWater));
   gl.uniform3fv(u.uNightLand, hexToRgb(p.nightLand));
   gl.uniform3fv(u.uLetterbox, hexToRgb(p.letterbox));
   gl.uniform1f(u.uMinAspect, config.layout.minAspect);
   gl.uniform1f(u.uNightLux, t.nightLux);
   gl.uniform1f(u.uDayLux, t.dayLux);
+  gl.uniform1f(u.uMoonStopLux, t.moonLux);
   gl.uniform1f(u.uLandExaggeration, r.landExaggeration);
-  gl.uniform1f(u.uSeaExaggeration, r.seaExaggeration);
+  gl.uniform1i(u.uMoonlight, config.moonlight.enabled ? 1 : 0);
+  gl.uniform1i(u.uMoonGlint, sp.moonGlint ? 1 : 0);
+  gl.uniform1f(u.uMoonPhase, moon.phaseAngle);
+  gl.uniform1f(u.uMoonDist, moon.distKm);
+  gl.uniform1i(u.uChannel, view.channel === 'u' ? 0 : 1);
+  gl.uniform1f(u.uLo, view.lo);
+  gl.uniform1f(u.uHi, view.hi);
+  gl.uniform1f(u.uLatCorrection, config.water.sim.latCorrection);
+  gl.uniform1f(u.uNormalStrength, sp.normalStrength);
+  gl.uniform1f(u.uExponent, sp.exponent);
+  gl.uniform1f(u.uStrength, sp.strength);
+  gl.uniform1f(u.uReveal, water.stats.reveal);
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, state.landTex);
@@ -127,10 +152,13 @@ function draw() {
   gl.activeTexture(gl.TEXTURE1);
   gl.bindTexture(gl.TEXTURE_2D, state.slopeTex);
   gl.uniform1i(u.uSlope, 1);
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D, water.texture());
+  gl.uniform1i(u.uWater, 2);
 
   drawQuad(gl, state.vao);
   drawStars(now, sunDir);
-  drawDiscs(now, sunDir);
+  drawDiscs(now, moon);
 }
 
 // Spec 05: stars alpha-blended over the map. They fade out with the twilight, so the day side gets none.
@@ -163,12 +191,11 @@ function drawStars(now, sunDir) {
 
 // Spec 06: outlines of the sun and moon over everything, the moon with its phase. Where they overlap
 // both sets of lines show.
-function drawDiscs(now, sunDir) {
+function drawDiscs(now, moon) {
   const { gl, discProg, config } = state;
   const u = discProg.uniforms;
   const d = config.discs;
   const sun = sunPosition(now);
-  const moon = moonPosition(now, sunDir);
 
   gl.useProgram(discProg.program);
   gl.uniform2f(u.uResolution, canvas.width, canvas.height);
@@ -202,53 +229,43 @@ function drawDiscs(now, sunDir) {
   gl.disable(gl.BLEND);
 }
 
-// --- render loop: one timer chain -------------------------------------------
-// Live (x1, running, GUI hidden): redraw every 5 s. Otherwise every animation frame.
+// --- render loop: one rAF chain, capped at render.fps -------------------------
+// Spec 10e: the water drifts every frame, so the page always animates, with or without the panel.
 
-let timer = 0;
 let raf = 0;
+let lastFrame = 0;
 
-function cancel() {
-  clearTimeout(timer);
-  cancelAnimationFrame(raf);
-  timer = raf = 0;
-}
-
-function schedule() {
-  cancel();
-  if (state.lost) return;
-  if (clock.isRealRate() && !state.guiVisible) timer = setTimeout(frame, LIVE_INTERVAL_MS);
-  else raf = requestAnimationFrame(frame);
-}
-
-function frame() {
-  timer = raf = 0;
-  draw();
-  if (state.guiVisible) state.gui.tick();
-  schedule();
-}
-
-// Draw on the next frame, then carry on with the normal cadence.
-export function requestRedraw() {
-  if (state.lost || !state.gl) return;
-  cancel();
+function frame(frameMs) {
   raf = requestAnimationFrame(frame);
+  const interval = 1000 / state.config.render.fps;
+  if (lastFrame && frameMs - lastFrame < interval - FRAME_SLACK_MS) return;
+  if (lastFrame) state.fps.value += (1000 / Math.max(1, frameMs - lastFrame) - state.fps.value) * 0.1;
+  lastFrame = frameMs;
+  draw(frameMs);
+  if (state.guiVisible) state.gui.tick();
 }
 
-clock.onChange(requestRedraw);
+function run() {
+  if (!raf && !state.lost) raf = requestAnimationFrame(frame);
+}
+
+function stop() {
+  cancelAnimationFrame(raf);
+  raf = 0;
+}
 
 // --- context loss -----------------------------------------------------------
 
 canvas.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
   state.lost = true;
-  cancel();
+  stop();
 });
 
 canvas.addEventListener('webglcontextrestored', () => {
   state.lost = false;
-  initGL();
-  requestRedraw();
+  initGL(); // a new sim, so the water warms up again
+  run();
 });
 
 // --- wake lock --------------------------------------------------------------
@@ -264,10 +281,7 @@ async function requestWakeLock() {
 
 // The lock is released whenever the page is hidden; take it again on return.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    requestWakeLock();
-    requestRedraw();
-  }
+  if (document.visibilityState === 'visible') requestWakeLock();
 });
 
 // --- dev GUI (spec 07) -------------------------------------------------------
@@ -277,18 +291,17 @@ async function loadGui() {
   const { createGui } = await import('./gui.js');
   state.gui = createGui({
     config: state.config,
-    requestRedraw,
-    onVisibility(visible) {
-      state.guiVisible = visible;
-      requestRedraw(); // switches between the live 5 s cadence and every frame
-    },
+    water: state.water,
+    fps: state.fps,
+    onVisibility(visible) { state.guiVisible = visible; },
   });
 }
 
 // --- start ------------------------------------------------------------------
 
 async function start() {
-  const [config, vert, frag, slope, starVert, starFrag, discVert, discFrag, land, elevation, stars] = await Promise.all([
+  const [config, vert, frag, slope, starVert, starFrag, discVert, discFrag, waterSeed, waterSim, waterFlow, waterParam,
+    land, elevation, stars] = await Promise.all([
     loadConfig(),
     fetchText('shaders/quad.vert'),
     fetchShader('shaders/sun.frag'),
@@ -297,6 +310,10 @@ async function start() {
     fetchText('shaders/stars.frag'),
     fetchText('shaders/disc.vert'),
     fetchText('shaders/disc.frag'),
+    fetchShader('shaders/water-seed.frag'),
+    fetchShader('shaders/water-sim.frag'),
+    fetchShader('shaders/water-flow.frag'),
+    fetchShader('shaders/water-param.frag'),
     fetchBitmap('data/land.png'),
     fetchBitmap('data/elevation.webp'),
     fetchBuffer('data/stars.bin'),
@@ -304,6 +321,7 @@ async function start() {
   state.config = config;
   state.sources = {
     vert, frag, slope, starVert, starFrag, discVert, discFrag, land, elevation, stars: starVertices(stars),
+    water: { seed: waterSeed, sim: waterSim, flow: waterFlow, param: waterParam },
   };
   state.gl = getContext(canvas);
   initGL();
@@ -314,7 +332,7 @@ async function start() {
     resizeObserver.observe(canvas); // Safari: no device-pixel-content-box
   }
   requestWakeLock();
-  requestRedraw();
+  run();
 
   if (params.has('gui')) loadGui().catch((err) => console.error('dev GUI failed to load:', err));
 }

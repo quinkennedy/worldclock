@@ -14,13 +14,15 @@ while the rest of the piece stays almost still. The drift speed is a free design
 | —   | Real ocean-current data steering the pattern | not written |
 | 10b | Several RD systems, one per colour layer, combined | defined (prototype built) |
 | 10c | Grey RD driving specular highlights under the real sun and moon | done (prototype) |
+| 10d | Warm-up and fade-in after a seed | done (prototype) |
+| 10e | RD water in the piece (specular look, Gray-Scott, map space) | done (long-run test pending) |
 | —   | RD drawn through a Ben-Day dot renderer (09 / 03) | not written |
 | —   | Long-run stability (health check, reseeding) | not written |
-| —   | Lighting: RD under the sun, twilight and night | not written |
+| —   | Lighting: RD under the sun, twilight and night | covered by 10c and 10e |
 
 ## Still open (for later sub-specs)
-- Simulation space for the piece: map (lat/lon) or screen. 10a has both, to compare.
+- ~~Simulation space for the piece~~: map space (10e).
 - Current data: dataset, climatology vs snapshot, resolution, size budget (a new data source for 02).
-- Day vs night, and how RD fades through twilight.
+- ~~Day vs night~~: 10c/10e's glints and three-stop base colours.
 - Long-run stability after weeks unattended.
 - GPU cost on the gallery machine.

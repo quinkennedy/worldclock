@@ -5,7 +5,7 @@
 An ambient artwork that shows where it is day and night on Earth right now.
 
 A simulated sun lights a globe, and the globe is unwrapped onto a flat map in real time. The
-lit side reads as pale paper and the dark side as deep blue-black, with a gradient between them
+lit side reads as warm grey paper and the dark side as near-black, with a gradient between them
 that follows how light actually fades through dusk. The shadow drifts slowly west to east as
 the Earth turns and tilts with the seasons. There are no labels, numbers or controls. The map
 is only day and night, and it's always true.
@@ -17,8 +17,12 @@ is only day and night, and it's always true.
 - **Physically based twilight.** A clear-sky model estimates how much light reaches the ground
   at each sun altitude, from full daylight through sunset to starlight. Brightness follows
   that light level on a log scale, roughly as the eye perceives it.
-- **Sunlit relief.** Mountains and the seafloor are lit by the real sun angle at each point, from
-  NOAA elevation data, so ranges throw long shade near dawn and dusk and flatten out at noon.
+- **Sunlit relief.** Mountains are lit by the real sun angle at each point, from NOAA elevation
+  data, so ranges throw long shade near dawn and dusk and flatten out at noon.
+- **Living water.** The oceans are a slowly drifting reaction-diffusion pattern, shaped by sea depth
+  and carried by a gentle flow. The real sun, and the moon at night, glint off it as off moving water.
+- **Moonlight.** The moon's real brightness, from its phase, distance and height in the sky, lights
+  the night side.
 - **The real night sky.** On the night side, each point shows the stars directly overhead there, from
   the Yale Bright Star Catalogue, turning with sidereal time and coloured by each star's temperature.
 - **Generative imagery.** Everything is drawn by a WebGL shader from data. There are no photographs.

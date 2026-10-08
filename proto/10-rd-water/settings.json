@@ -6,8 +6,8 @@
     "latCorrection": 0,
     "stepsPerFrame": 1,
     "precision": "auto",
-    "warmupSteps": 100,
-    "fadeSeconds": 5
+    "warmupSteps": 1000,
+    "fadeSeconds": 10
   },
   "model": "grayScott",
   "grayScott": {
