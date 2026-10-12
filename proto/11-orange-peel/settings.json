@@ -1,0 +1,30 @@
+{
+  "projection": "globular",
+  "anchor": "sun",
+  "landFirstCentre": -165,
+  "sunFirstCentre": -180,
+  "mapLandCentre": 0,
+  "mapSunCentre": 0,
+  "count": 4,
+  "gapDeg": 0,
+  "joinDeg": 5,
+  "joinBlendDeg": 5,
+  "spillDeg": 0,
+  "marbleRows": 3,
+  "marbleLatDeg": 45,
+  "marbleDistance": 4,
+  "marbleGap": 0.1,
+  "marbleHex": true,
+  "marbleZoom": 1,
+  "background": "#000000",
+  "margin": 0.01,
+  "sceneScale": 1,
+  "mipmaps": true,
+  "meshStepDeg": 1,
+  "scene": {
+    "palette":{
+      "dayWater":"#5f8c8c",
+      "nightWater":"#09091c"
+      }
+    }
+}
