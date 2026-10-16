@@ -1,12 +1,13 @@
 // Setup, render loop and wake lock.
 import * as clock from './clock.js';
-import { loadConfig, hexToRgb } from './config.js';
+import { loadConfig, hexToRgb, hexToOklab } from './config.js';
 import { sunDirection, sunPosition } from './sun.js';
 import { moonPosition } from './moon.js';
 import { skyMatrix, starVertices, STAR_STRIDE } from './stars.js';
 import { createWater } from './water.js';
 import {
-  getContext, createProgram, createQuad, drawQuad, createMapTexture, createSlopeTexture, createStarBuffer,
+  getContext, createProgram, createQuad, drawQuad, createMapTexture, createCoverTexture, createSlopeTexture,
+  createStarBuffer,
 } from './gl.js';
 
 const FRAME_SLACK_MS = 4; // a frame this early still counts, so a 60 Hz display holds 20 fps rather than 15
@@ -23,6 +24,7 @@ const state = {
   prog: null,
   vao: null,
   landTex: null,
+  coverTex: null,    // spec 03b: land-cover class fractions
   slopeTex: null,    // spec 04: terrain slopes, built once from the elevation data
   starProg: null,    // spec 05: zenith stars
   starBuf: null,     // { vao, count }
@@ -68,6 +70,7 @@ function initGL() {
   state.prog = createProgram(gl, state.sources.vert, state.sources.frag);
   state.vao = createQuad(gl);
   state.landTex = createMapTexture(gl, state.sources.land);
+  state.coverTex = createCoverTexture(gl, state.sources.cover);
   state.slopeTex = createSlopeTexture(gl, state.sources.elevation, state.sources.vert, state.sources.slope, state.vao);
   state.starProg = createProgram(gl, state.sources.starVert, state.sources.starFrag);
   state.starBuf = createStarBuffer(gl, state.sources.stars, STAR_STRIDE);
@@ -122,7 +125,10 @@ function draw(frameMs) {
   gl.uniform3fv(u.uSunDir, sunDir);
   gl.uniform3fv(u.uMoonDir, moon.dir);
   gl.uniform3fv(u.uDayWater, hexToRgb(p.dayWater));
-  gl.uniform3fv(u.uDayLand, hexToRgb(p.dayLand));
+  gl.uniform3fv(u.uDayArid, hexToOklab(p.dayArid));
+  gl.uniform3fv(u.uDayForest, hexToOklab(p.dayForest));
+  gl.uniform3fv(u.uDayGrass, hexToOklab(p.dayGrass));
+  gl.uniform3fv(u.uDayIce, hexToOklab(p.dayIce));
   gl.uniform3fv(u.uMoonWater, hexToRgb(p.moonWater));
   gl.uniform3fv(u.uMoonLand, hexToRgb(p.moonLand));
   gl.uniform3fv(u.uNightWater, hexToRgb(p.nightWater));
@@ -155,6 +161,9 @@ function draw(frameMs) {
   gl.activeTexture(gl.TEXTURE2);
   gl.bindTexture(gl.TEXTURE_2D, water.texture());
   gl.uniform1i(u.uWater, 2);
+  gl.activeTexture(gl.TEXTURE3);
+  gl.bindTexture(gl.TEXTURE_2D, state.coverTex);
+  gl.uniform1i(u.uCover, 3);
 
   drawQuad(gl, state.vao);
   drawStars(now, sunDir);
@@ -301,7 +310,7 @@ async function loadGui() {
 
 async function start() {
   const [config, vert, frag, slope, starVert, starFrag, discVert, discFrag, waterSeed, waterSim, waterFlow, waterParam,
-    land, elevation, stars] = await Promise.all([
+    land, cover, elevation, stars] = await Promise.all([
     loadConfig(),
     fetchText('shaders/quad.vert'),
     fetchShader('shaders/sun.frag'),
@@ -315,12 +324,13 @@ async function start() {
     fetchShader('shaders/water-flow.frag'),
     fetchShader('shaders/water-param.frag'),
     fetchBitmap('data/land.png'),
+    fetchBitmap('data/landcover.webp'),
     fetchBitmap('data/elevation.webp'),
     fetchBuffer('data/stars.bin'),
   ]);
   state.config = config;
   state.sources = {
-    vert, frag, slope, starVert, starFrag, discVert, discFrag, land, elevation, stars: starVertices(stars),
+    vert, frag, slope, starVert, starFrag, discVert, discFrag, land, cover, elevation, stars: starVertices(stars),
     water: { seed: waterSeed, sim: waterSim, flow: waterFlow, param: waterParam },
   };
   state.gl = getContext(canvas);

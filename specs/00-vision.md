@@ -27,7 +27,7 @@ no numbers, labels or UI. It's a clock only in the sense that it is always true.
 | Sim clock  | Real time is the wall clock (`Date.now()`), followed at sub-ms resolution via `performance.now()` and re-synced when they drift > 50 ms apart, so fast playback doesn't stutter. Zone-less `?t=`/panel times are UTC |
 | Config     | Tunables in `config.json`; GUI copies or downloads it; commit the file to change defaults |
 | Motion     | Real time on the public page; speed, set time, pause and presets in the dev GUI. One rAF chain capped at `render.fps` (20) at all times, since the water drifts every frame (10e) |
-| Day side   | Light "paper", CMYK Ben-Day overprint by land cover (03, not built). Built so far (10e): land and water nearly the same warm grey, the water a drifting reaction-diffusion surface that the sun glints off |
+| Day side   | Light "paper", CMYK Ben-Day overprint by land cover (03, not built). Built so far: the water a drifting reaction-diffusion surface that the sun glints off (10e), on a faded grey-green (`#c4c2a7`); the land in faint amber-ivory land-cover tones, arid, forest, grass and ice each a day colour mixed by fraction in OKLab, from 03a's "Faded amber (subtle)" palette (03b). Moon and night land stay single colours |
 | Night side | Dark; land a faint tint vs water; zenith star map; stylised moon; physical moonlight (14) with a moon colour stop and a moon glint on the water (10e) |
 | Twilight   | One smooth gradient from a clear-sky illuminance model (log lux vs sun altitude), no stepped bands. Only its night/day lux range is in `config.json`, and it isn't in the dev GUI |
 | Twilight model (provisional) | `dayLux` 100000: the whole day side shades toward the terminator, brightest at the sub-solar point (revisit with 04's relief lighting). `nightLux` 0.001: full dark from about -18°. The model's physical constants stay in the shader, not config. Clear sky. Moonlight (14) adds its lux to the sun's before the same mapping. Since 10e the mapping has three colour stops, night → moon → day, on one log-lux scale: night at 0 lux, the moon target at `twilight.moonLux` (0.25, config-only), day at `dayLux`; sun twilight passes through the moon target too. Colours blend in sRGB, not linear light |
@@ -56,6 +56,7 @@ stage changes; its number never changes. `ready` means every key decision has be
 | 02 | Data prep pipeline         | **done** | —         |
 | 03 | Land-cover CMYK halftone   | defined | 01, 02     |
 | 03a | Land-cover palette prototype (`proto/03a-landcover-palette/`) | **done** (prototype; judging on the real display pending) | 02 (01, 04 scene) |
+| 03b | Land-cover palette in the piece (03a's "Faded amber (subtle)") | **done** (long-run test pending) | 03a |
 | 04 | Relief lit by the sun      | **done** (long-run test pending) | 01, 02     |
 | 05 | Night sky: zenith stars    | **done** (long-run test pending) | 01         |
 | 06 | Sun & moon discs           | **done** (long-run test pending) | 01         |

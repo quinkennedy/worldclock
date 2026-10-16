@@ -37,7 +37,7 @@
       "forest": "#cec59f",
       "grass": "#d4c9a2",
       "ice": "#dfd6b7",
-      "elevation": { "lo": 0, "hi": 4000, "exponent": 1, "brightness": 0.02, "saturation": -0.5 }
+      "elevation": { "lo": 0, "hi": 4000, "exponent": 1, "brightness": 0, "saturation": 0 }
     },
     {
       "name": "Atlas",

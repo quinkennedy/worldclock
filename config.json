@@ -1,7 +1,10 @@
 {
   "palette": {
-    "dayWater": "#b5aa91",
-    "dayLand": "#b5aa88",
+    "dayWater": "#c4c2a7",
+    "dayArid": "#dacda7",
+    "dayForest": "#cec59f",
+    "dayGrass": "#d4c9a2",
+    "dayIce": "#dfd6b7",
     "moonWater": "#0e1722",
     "moonLand": "#151820",
     "nightWater": "#08080c",

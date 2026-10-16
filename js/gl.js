@@ -80,6 +80,21 @@ export function createMapTexture(gl, image) {
   return tex;
 }
 
+// Spec 03b: landcover.webp's RGB class fractions, filtered linearly; wraps in longitude, clamps at the poles,
+// mipmapped.
+export function createCoverTexture(gl, image) {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  return tex;
+}
+
 // Spec 04: runs the slope shader once over the packed elevation image and returns an RG16F texture
 // of terrain slopes (wraps in longitude, clamps at the poles, mipmapped). The packed source and the
 // program are deleted. Rendering to RG16F needs EXT_color_buffer_float; without it the map is flat.

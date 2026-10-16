@@ -2,6 +2,7 @@
 // Spec 01: day/night terminator with a smooth twilight gradient from a clear-sky illuminance model.
 // Spec 04: land relief. The sun's (and moon's) altitude on land is taken against the terrain normal.
 // Spec 10e: the water is a reaction-diffusion surface seen from straight above; the real sun and moon glint off it.
+// Spec 03b: the day land colour is a mix of the land-cover classes, in OKLab.
 // Land and water blend night -> moon -> day on one log-lux scale.
 precision highp float;
 
@@ -11,9 +12,13 @@ uniform vec3 uMoonDir;      // unit vector to the moon, same frame
 uniform sampler2D uLand;    // land mask, equirectangular, row 0 = 90°N, col 0 = 180°W
 uniform sampler2D uSlope;   // terrain slopes, same layout: R = dh/d(east), G = dh/d(north), m/m
 uniform sampler2D uWater;   // RD state, same layout: R = u, G = v
+uniform sampler2D uCover;   // spec 03b: R arid, G forest, B ice fractions of the cell; grass = land − R − G − B
 
 uniform vec3 uDayWater;
-uniform vec3 uDayLand;
+uniform vec3 uDayArid;     // spec 03b: the land classes' day colours, in OKLab
+uniform vec3 uDayForest;
+uniform vec3 uDayGrass;
+uniform vec3 uDayIce;
 uniform vec3 uMoonWater;
 uniform vec3 uMoonLand;
 uniform vec3 uNightWater;
@@ -94,6 +99,28 @@ float altitude(vec3 n, vec3 dir) {
   return asin(clamp(dot(n, dir), -1.0, 1.0)) / DEG;
 }
 
+// OKLab -> sRGB (Ottosson), gamut-clamped.
+vec3 oklabToSrgb(vec3 c) {
+  vec3 lms = vec3(
+    c.x + 0.3963377774 * c.y + 0.2158037573 * c.z,
+    c.x - 0.1055613458 * c.y - 0.0638541728 * c.z,
+    c.x - 0.0894841775 * c.y - 1.2914855480 * c.z);
+  lms = lms * lms * lms;
+  vec3 lin = clamp(vec3(
+     4.0767416621 * lms.x - 3.3077115913 * lms.y + 0.2309699292 * lms.z,
+    -1.2684380046 * lms.x + 2.6097574011 * lms.y - 0.3413193965 * lms.z,
+    -0.0041960863 * lms.x - 0.7034186147 * lms.y + 1.7076147010 * lms.z), 0.0, 1.0);
+  return mix(12.92 * lin, 1.055 * pow(lin, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, lin));
+}
+
+// Spec 03b: the day land colour, the land classes mixed by their share of the cell's land.
+vec3 dayLand(vec2 uv, float landFrac) {
+  vec3 cover = texture(uCover, uv).rgb;
+  vec4 f = vec4(cover, max(landFrac - cover.r - cover.g - cover.b, 0.0)); // arid, forest, ice, grass
+  f /= max(f.r + f.g + f.b + f.a, 1e-4);
+  return oklabToSrgb(f.r * uDayArid + f.g * uDayForest + f.b * uDayIce + f.a * uDayGrass);
+}
+
 // RD value as wave height, 0..1.
 float height(vec2 uv) {
   vec4 s = texture(uWater, uv);
@@ -116,7 +143,8 @@ void main() {
 
   // u wraps at ±180° (textures use REPEAT on s).
   vec2 uv = vec2(lon / 360.0 + 0.5, 0.5 - lat / 180.0);
-  float land = smoothstep(0.4, 0.6, texture(uLand, uv).r);
+  float landFrac = texture(uLand, uv).r;
+  float land = smoothstep(0.4, 0.6, landFrac);
 
   float la = lat * DEG;
   float lo = lon * DEG;
@@ -129,7 +157,7 @@ void main() {
   vec3 terrain = normalize(up - slope.x * east - slope.y * north);
   float landLux = illuminance(altitude(terrain, uSunDir))
                 + (uMoonlight ? moonLux(altitude(terrain, uMoonDir)) : 0.0);
-  vec3 ground = lightBlend(uNightLand, uMoonLand, uDayLand, landLux);
+  vec3 ground = lightBlend(uNightLand, uMoonLand, dayLand(uv, landFrac), landLux);
   if (land > 0.999) {
     fragColor = vec4(ground, 1.0);
     return;

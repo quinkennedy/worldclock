@@ -4,8 +4,12 @@
 const DEFAULTS = {
   palette: {
     // Spec 10e: land and water each blend night -> moon -> day on one log-lux scale (twilight below).
-    dayWater: '#b5aa91',
-    dayLand: '#b5aa88',
+    // Spec 03b: the day land is the land-cover classes' colours, mixed by fraction in OKLab (03a's palette).
+    dayWater: '#c4c2a7',
+    dayArid: '#dacda7',
+    dayForest: '#cec59f',
+    dayGrass: '#d4c9a2',
+    dayIce: '#dfd6b7',
     moonWater: '#0e1722',
     moonLand: '#151820',
     nightWater: '#08080c',
@@ -123,4 +127,17 @@ export async function loadConfig() {
 export function hexToRgb(hex) {
   const n = parseInt(hex.replace('#', ''), 16);
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
+// '#rrggbb' -> OKLab [L, a, b] (Ottosson), for colours the shaders mix perceptually (spec 03b).
+export function hexToOklab(hex) {
+  const [r, g, b] = hexToRgb(hex).map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [
+    0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+  ];
 }

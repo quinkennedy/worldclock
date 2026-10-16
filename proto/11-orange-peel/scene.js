@@ -2,12 +2,12 @@
 // Moved out of main.js by spec 11d (decision 13) so 11d imports it instead of copying it a second time. The drawing
 // is copied from js/main.js's draw(), drawStars() and drawDiscs() (11a decision 2), drawing into the offscreen
 // framebuffer at w×h (2:1, so the whole map with no letterbox) instead of the canvas.
-import { hexToRgb } from '../../js/config.js';
+import { hexToRgb, hexToOklab } from '../../js/config.js';
 import { sunPosition } from '../../js/sun.js';
 import { skyMatrix, starVertices, STAR_STRIDE } from '../../js/stars.js';
 import { createWater } from '../../js/water.js';
 import {
-  createProgram, createQuad, drawQuad, createMapTexture, createSlopeTexture, createStarBuffer,
+  createProgram, createQuad, drawQuad, createMapTexture, createCoverTexture, createSlopeTexture, createStarBuffer,
 } from '../../js/gl.js';
 
 // Paths are relative to a page in proto/<name>/.
@@ -61,7 +61,7 @@ export function landMask(bitmap) {
 // Everything the scene needs, fetched in parallel. `land` is the land.png bitmap.
 export async function loadSceneSources() {
   const [vert, frag, slope, starVert, starFrag, discVert, discFrag, waterSeed, waterSim, waterFlow, waterParam,
-    land, elevation, stars] = await Promise.all([
+    land, cover, elevation, stars] = await Promise.all([
     fetchText(`${ROOT}shaders/quad.vert`),
     fetchShader(`${ROOT}shaders/sun.frag`),
     fetchText(`${ROOT}shaders/slope.frag`),
@@ -74,11 +74,12 @@ export async function loadSceneSources() {
     fetchShader(`${ROOT}shaders/water-flow.frag`),
     fetchShader(`${ROOT}shaders/water-param.frag`),
     fetchBitmap(`${ROOT}data/land.png`),
+    fetchBitmap(`${ROOT}data/landcover.webp`),
     fetchBitmap(`${ROOT}data/elevation.webp`),
     fetchBuffer(`${ROOT}data/stars.bin`),
   ]);
   return {
-    vert, frag, slope, starVert, starFrag, discVert, discFrag, land, elevation, stars: starVertices(stars),
+    vert, frag, slope, starVert, starFrag, discVert, discFrag, land, cover, elevation, stars: starVertices(stars),
     water: { seed: waterSeed, sim: waterSim, flow: waterFlow, param: waterParam },
   };
 }
@@ -92,6 +93,7 @@ export function createScene(gl, s, config) {
   const prog = createProgram(gl, s.vert, s.frag);
   const vao = createQuad(gl);
   const landTex = createMapTexture(gl, s.land);
+  const coverTex = createCoverTexture(gl, s.cover); // spec 03b
   const slopeTex = createSlopeTexture(gl, s.elevation, s.vert, s.slope, vao);
   const starProg = createProgram(gl, s.starVert, s.starFrag);
   const starBuf = createStarBuffer(gl, s.stars, STAR_STRIDE);
@@ -151,7 +153,10 @@ export function createScene(gl, s, config) {
     gl.uniform3fv(u.uSunDir, sunDir);
     gl.uniform3fv(u.uMoonDir, moon.dir);
     gl.uniform3fv(u.uDayWater, hexToRgb(p.dayWater));
-    gl.uniform3fv(u.uDayLand, hexToRgb(p.dayLand));
+    gl.uniform3fv(u.uDayArid, hexToOklab(p.dayArid));
+    gl.uniform3fv(u.uDayForest, hexToOklab(p.dayForest));
+    gl.uniform3fv(u.uDayGrass, hexToOklab(p.dayGrass));
+    gl.uniform3fv(u.uDayIce, hexToOklab(p.dayIce));
     gl.uniform3fv(u.uMoonWater, hexToRgb(p.moonWater));
     gl.uniform3fv(u.uMoonLand, hexToRgb(p.moonLand));
     gl.uniform3fv(u.uNightWater, hexToRgb(p.nightWater));
@@ -184,6 +189,9 @@ export function createScene(gl, s, config) {
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, water.texture());
     gl.uniform1i(u.uWater, 2);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, coverTex);
+    gl.uniform1i(u.uCover, 3);
 
     drawQuad(gl, vao);
     drawStars(now, sunDir, w, h);

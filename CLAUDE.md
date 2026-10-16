@@ -15,7 +15,7 @@ night: no text, numbers or UI. It's hosted as a static GitHub Pages site and run
 
 When a spec changes stage, rename the file (`git mv`) and update its row in the `00-vision.md` spec map. The number
 never changes; refer to specs by number ("spec 05") in prose.
-Done: 01, 02, 03a, 04, 05, 06, 07, 10a, 10c, 10d, 10e, 11a, 11c, 11d, 11e, 11f, 11g, 11h, 11i, 11j (long-run test pending for 01, 04, 05, 06, 07, 10e; 03a, 10a, 10c, 10d, 11a, 11c, 11d, 11e, 11f, 11g, 11h, 11i and 11j are prototypes, no long-run test). 10b is defined (prototype built ahead of spec). 11b (orange peel in the piece) is an idea, waiting on 11a's look. The next spec isn't chosen yet, so ask. Don't
+Done: 01, 02, 03a, 03b, 04, 05, 06, 07, 10a, 10c, 10d, 10e, 11a, 11c, 11d, 11e, 11f, 11g, 11h, 11i, 11j (long-run test pending for 01, 03b, 04, 05, 06, 07, 10e; 03a, 10a, 10c, 10d, 11a, 11c, 11d, 11e, 11f, 11g, 11h, 11i and 11j are prototypes, no long-run test). 10b is defined (prototype built ahead of spec). 11b (orange peel in the piece) is an idea, waiting on 11a's look. The next spec isn't chosen yet, so ask. Don't
 start other specs unless asked.
 Every spec that touches `js/` or `shaders/` needs the long-run test in `DEV.md` before it's considered shipped.
 If a decision isn't in a spec, ask; don't invent it. Record new decisions in `00-vision.md`.

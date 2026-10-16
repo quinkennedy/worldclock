@@ -99,7 +99,7 @@ export function createGui({ config, water, fps, onVisibility }) {
   const design = pane.addFolder({ title: 'Design' });
 
   const twilight = design.addFolder({ title: 'Twilight' });
-  for (const key of ['dayWater', 'dayLand', 'moonWater', 'moonLand', 'nightWater', 'nightLand', 'letterbox']) {
+  for (const key of ['dayWater', 'dayArid', 'dayForest', 'dayGrass', 'dayIce', 'moonWater', 'moonLand', 'nightWater', 'nightLand', 'letterbox']) {
     twilight.addBinding(config.palette, key, { view: 'color' });
   }
   twilight.addBinding(config.moonlight, 'enabled', { label: 'moonlight' });
