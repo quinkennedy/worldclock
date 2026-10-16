@@ -1,0 +1,70 @@
+{
+  "palette": "Muted paper",
+  "blend": "mix",
+  "scene": false,
+  "palettes": [
+    {
+      "name": "Piece grey",
+      "water": "#b5aa91",
+      "arid": "#b5aa88",
+      "forest": "#b5aa88",
+      "grass": "#b5aa88",
+      "ice": "#b5aa88",
+      "elevation": { "lo": 0, "hi": 4000, "exponent": 1, "brightness": 0, "saturation": 0 }
+    },
+    {
+      "name": "Muted paper",
+      "water": "#b8c2bf",
+      "arid": "#dccaa2",
+      "forest": "#8e9d79",
+      "grass": "#c1c190",
+      "ice": "#efebe1",
+      "elevation": { "lo": 0, "hi": 4000, "exponent": 1, "brightness": 0.06, "saturation": -0.4 }
+    },
+    {
+      "name": "Faded amber",
+      "water": "#b9bca8",
+      "arid": "#e4d3a9",
+      "forest": "#aaa784",
+      "grass": "#d8cb9e",
+      "ice": "#efe5c9",
+      "elevation": { "lo": 0, "hi": 4000, "exponent": 1, "brightness": 0.04, "saturation": -0.5 }
+    },
+    {
+      "name": "Faded amber (subtle)",
+      "water": "#c4c2a7",
+      "arid": "#dacda7",
+      "forest": "#cec59f",
+      "grass": "#d4c9a2",
+      "ice": "#dfd6b7",
+      "elevation": { "lo": 0, "hi": 4000, "exponent": 1, "brightness": 0.02, "saturation": -0.5 }
+    },
+    {
+      "name": "Atlas",
+      "water": "#a9cbe0",
+      "arid": "#e8d3a0",
+      "forest": "#5c8d4c",
+      "grass": "#a8c579",
+      "ice": "#f4f6f7",
+      "elevation": { "lo": 0, "hi": 5000, "exponent": 0.8, "brightness": -0.12, "saturation": -0.25 }
+    },
+    {
+      "name": "CMYK inks",
+      "water": "#8ccfe6",
+      "arid": "#f2c66e",
+      "forest": "#56b07a",
+      "grass": "#c6dc76",
+      "ice": "#f6f3ea",
+      "elevation": { "lo": 0, "hi": 4000, "exponent": 1, "brightness": 0.08, "saturation": -0.5 }
+    },
+    {
+      "name": "Duotone",
+      "water": "#2f4f5a",
+      "arid": "#d8cdb5",
+      "forest": "#4d6b6a",
+      "grass": "#9aa69a",
+      "ice": "#f2ede2",
+      "elevation": { "lo": 0, "hi": 4000, "exponent": 1, "brightness": 0.1, "saturation": 0 }
+    }
+  ]
+}
